@@ -1,8 +1,6 @@
 from configparser import ConfigParser
 import os
-import apidriver
-import time
-import json
+from src import apidriver
 
 account = ""
 token = ""
@@ -14,7 +12,7 @@ database_name = ""
 print("loading config")
 config = ConfigParser()
 script_dir = os.path.dirname(os.path.abspath(__file__))
-config_file_path = os.path.join(script_dir, "settings.ini")
+config_file_path = os.path.join(script_dir, "..//settings.ini")
 # Use the config file
 config.read(config_file_path)
 account = config.get('main-section', 'account')

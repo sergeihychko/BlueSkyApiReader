@@ -37,9 +37,7 @@ class Driver:
     def find_single_skeet(self, account, token, uri):
         client = Client()
         client.login(account, token)
-        print("Calling feed.post.get")
-        post = client.app.bsky.feed.post.get(client.me.did, AtUri.from_str(uri).rkey)
-        print("Post text : " + post.value.text)
+        return client.app.bsky.feed.post.get(client.me.did, AtUri.from_str(uri).rkey)
 
     def create_skeet(self, account, token, skeet_text):
         client = Client()
