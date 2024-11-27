@@ -5,8 +5,8 @@ Project Structure
 -----------------
 This project has two modules:
 
-src.apidriver contains wrapper functions for the bluesky api.
-src.main contains the application functionality.
+* src.apidriver contains wrapper functions for the bluesky api.
+* src.main contains the application functionality.
 Test modules are placed under the tests directory. Note that tests is not a Python package and has no "__init__.py" file.
 
 Running Tests
