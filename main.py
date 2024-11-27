@@ -43,19 +43,5 @@ with open(filename, 'w') as f:
     json.dump(follows, f, indent=4)
 
 print("ending TEST DRIVER")
-#testing git branch
 
-def create_follows_file():
-    follows = driver_object.get_follow_authors(account, token, account)
-    # for author in follows:
-    #     print("author :" + str(author))
 
-    # create json output file of followers
-    filename = 'frequency.json'
-    try:
-        os.remove(filename)
-    except OSError:
-        pass
-    print("writing followers list to jason file")
-    with open(filename, 'w') as f:
-        json.dump(follows, f, indent=4)
