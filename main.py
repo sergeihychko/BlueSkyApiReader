@@ -36,7 +36,7 @@ driver_object = apidriver.Driver()
 #new_skeet_uri = driver_object.create_skeet(account, token, "This a test skeet using an api call. It will be deleted momentarily")
 # print("sleep for 5.....")
 # time.sleep(5)
-# driver_object.find_single_skeep(account, token, new_skeet_uri)
+# driver_object.find_single_skeet(account, token, new_skeet_uri)
 # time.sleep(5)
 # print("sleep for 5.....")
 # driver_object.delete_skeet(account, token, new_skeet_uri)
@@ -57,4 +57,9 @@ driver_object = apidriver.Driver()
 #
 # print("ending TEST DRIVER")
 
+#Test get likes
+like_count =999
+test_likes_uri = "at://did:plc:7taofukbj2iy22gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
+like_count = driver_object.find_skeet_likes(account, token, test_likes_uri)
+print("Number of likes : " + str(like_count))
 

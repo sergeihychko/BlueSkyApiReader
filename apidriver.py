@@ -34,7 +34,7 @@ class Driver:
         # new_post = client.app.bsky.feed.post.create(client.me.did, post_record)
         # print(new_post)
 
-    def find_single_skeep(self, account, token, uri):
+    def find_single_skeet(self, account, token, uri):
         client = Client()
         client.login(account, token)
         print("Calling feed.post.get")
@@ -73,3 +73,14 @@ class Driver:
         unique_authors = list(set(post.handle for post in follows))
         return unique_authors
 
+    def find_skeet_likes(self, account, token, uri):
+        count = 0
+        client = Client()
+        client.login(account, token)
+        print("Calling feed.post.get")
+        likes = client.app.bsky.feed.get_likes(params = {'uri': uri, 'limit': 10})
+        like_list = likes['likes']
+        for like in like_list:
+            count = count + 1
+            print("likes : " + str(like))
+        return count
