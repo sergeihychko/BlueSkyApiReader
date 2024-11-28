@@ -1,7 +1,8 @@
 
 from atproto import AtUri, Client, models
-from configparser import ConfigParser
+import json
 import os
+#from post_data import PostData
 
 class Driver:
     """
@@ -11,28 +12,20 @@ class Driver:
     def perform_get_skeets(self, account, token, limit):
         client = Client()
         client.login(account, token)
+        latest = []
 
         posts = client.app.bsky.feed.post.list(client.me.did, limit=10)
         for uri, post in posts.records.items():
             print("retrieving post - uri : " + uri)
-            print(uri, post.text)
-
+            #print(uri, post.txt)
+            latest.append({'uri' : uri, 'txt':post.text})
+        return latest
 
     def get_deleted(self, account, token):
         client = Client()
         client.login(account, token)
-        # deleted_post = client.app.bsky.feed.post.delete(client.me.did, AtUri.from_str(new_post.uri).rkey)
-        # print(deleted_post)
-
-
-
-        # post = client.app.bsky.feed.post.get(client.me.did, AtUri.from_str(uri).rkey)
-        # print(post.value.text)
-        #
-        # post_record = models.AppBskyFeedPost.Record(text='test record namespaces',
-        #                                             created_at=client.get_current_time_iso())
-        # new_post = client.app.bsky.feed.post.create(client.me.did, post_record)
-        # print(new_post)
+        # print("calling get deleted posts")
+        # driver_object.get_deleted(account, token)
 
     def find_single_skeet(self, account, token, uri):
         client = Client()
@@ -82,3 +75,17 @@ class Driver:
             count = count + 1
             print("likes : " + str(like))
         return count
+
+    def create_follower_json(self, account, token):
+        follows = self.get_follow_authors(account, token, account)
+        for author in follows:
+            print("author :" + str(author))
+        #create json output file of followers
+        filename = 'frequency.json'
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+        print("writing followers list to jason file")
+        with open(filename, 'w') as f:
+            json.dump(follows, f, indent=4)
