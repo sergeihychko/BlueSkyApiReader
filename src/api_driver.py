@@ -9,12 +9,13 @@ class Driver:
         class to wrap methods for generating output files after parsing
         """
 
-    def perform_get_skeets(self, account, token, limit):
+    def perform_get_skeets(self, account: str, token: str):
         client = Client()
         client.login(account, token)
         latest = []
 
-        posts = client.app.bsky.feed.post.list(client.me.did, limit=10)
+        #posts = client.app.bsky.feed.post.list(client.me.did, limit=max)
+        posts = client.app.bsky.feed.post.list(client.me.did,limit=100)
         for uri, post in posts.records.items():
             print("retrieving post - uri : " + uri)
             #print(uri, post.txt)
