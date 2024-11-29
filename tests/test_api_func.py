@@ -6,9 +6,11 @@ Each function in this module is a test case.
 
 import pytest
 from src.api_driver import Driver
+from src.client_wrapper import ClientWrapper
 from configparser import ConfigParser
 import os
 import time
+from atproto_client import Client
 
 config = ConfigParser()
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +19,9 @@ config.read(config_file_path)
 account = config.get('test-section', 'test_account')
 token = config.get('test-section', 'test_api_token')
 default_limit = config.get('main-section', 'default_limit')
-driver_object = Driver()
+client_wrapper = ClientWrapper(account, token)
+client = client_wrapper.init_client()
+
 
 #Test get likes
 def test_likes():
@@ -26,7 +30,7 @@ def test_likes():
     """
     like_count = 999
     test_likes_uri = "at://did:plc:7taofukbj2iy22gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
-    like_count = driver_object.find_skeet_likes(account, token, test_likes_uri)
+    like_count = Driver().find_skeet_likes(client, test_likes_uri)
     print("Number of likes : " + str(like_count))
     if like_count == 0:
         assert False
@@ -35,27 +39,28 @@ def test_likes():
 
 def test_get():
     test_get_uri = "at://did:plc:7taofukbj2iy22gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
-    post = driver_object.find_single_skeet(account, token, test_get_uri)
+    post = Driver().find_single_skee(client, test_get_uri)
     assert len(post.value.text) > 0
 
+@pytest.mark.skip(reason="The test affects the test account, so by default it should be skipped.")
 def test_delete():
     """
     Test creating a new skeet, query the skeet, then delete the skeet
     """
-    new_skeet_uri = driver_object.create_skeet(account, token, "This a test skeet using an api call. It will be deleted momentarily")
+    new_skeet_uri = Driver().create_skeet(account, token, "This a test skeet using an api call. It will be deleted momentarily")
     print("sleep for 5.....")
     time.sleep(5)
-    driver_object.find_single_skeet(account, token, new_skeet_uri)
+    Driver().find_single_skeet(client, new_skeet_uri)
     time.sleep(5)
     print("sleep for 5.....")
-    driver_object.delete_skeet(account, token, new_skeet_uri)
+    Driver().delete_skeet(client, new_skeet_uri)
 
 def test_find_followers():
-    follows = driver_object.get_follow_authors(account, token, account)
+    follows = Driver().get_follow_authors(client, account)
     assert len(follows)
 
 def test_json_followers():
-    driver_object.create_follower_json(account, token)
+    Driver().create_follower_json(client)
     path = '..//frequency.json'
     try:
         check_file = os.path.isfile(path)
@@ -65,7 +70,7 @@ def test_json_followers():
         assert False
 
 def test_get_latest():
-    skeet_list = driver_object.perform_get_skeets(account, token, default_limit)
+    skeet_list = Driver().perform_get_skeets(client, default_limit)
     assert len(skeet_list)
 
 

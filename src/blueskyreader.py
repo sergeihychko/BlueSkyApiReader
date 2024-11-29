@@ -1,6 +1,8 @@
 from configparser import ConfigParser
+from atproto_client import Client
 import os
 from api_driver import *
+from client_wrapper import ClientWrapper
 from tkinter import *
 import tkinter as tk
 from pandastable import Table, TableModel
@@ -11,12 +13,22 @@ class BlueSkyReader(Frame):
         print("hi there, everyone!")
 
     def createWidgets(self):
-        self.QUIT = Button(self)
-        self.QUIT["text"] = "QUIT"
-        self.QUIT["fg"] = "red"
-        self.QUIT["command"] = self.quit
+        menu = Menu(root)
+        root.config(menu=menu)
+        subMenu = Menu(root)
+        menu.add_cascade(label="File", menu=subMenu)
+        subMenu.add_command(label="Refresh", command=self.do_nothing)
+        subMenu.add_separator()
+        subMenu.add_command(label="Exit", command=self.quit)
+        editMenu = Menu(menu)
+        menu.add_cascade(labe="Edit", menu=editMenu)
+        editMenu.add_command(label="Redo", command=self.do_nothing)
 
-        self.QUIT.pack({"side": "left"})
+        # toolbar
+        toolbar = Frame(root, bg="#747572", relief=tk.RAISED)
+        detailButton = Button(toolbar, text="Detail", command=self.create_detail)
+        detailButton.pack(side=tk.LEFT, padx=1, pady=1)
+        toolbar.pack(side=tk.TOP, fill=tk.X)
 
         # Create the variables
         var = StringVar();
@@ -34,11 +46,16 @@ class BlueSkyReader(Frame):
         self.pt = Table(self.frame, dataframe=self.df, showtoolbar=True, showstatusbar=True)
         self.pt.show()
 
+
     def __init__(self, df, master=None):
         Frame.__init__(self, master)
         self.df = df
         self.pack()
         self.createWidgets()
+
+    def create_detail(self):
+        print("opening the detail window.")
+        print(self.df)
 
     def refresh_dataframe(self, var):
         page_size = var
@@ -58,9 +75,9 @@ class BlueSkyReader(Frame):
         print("returning paginated dataframe")
         return df.iloc[start_index:end_index]
 
-account = ""
-token = ""
-default_limit = 0
+    def do_nothing(self):
+        pass
+
 application_title = ""
 database_name = ""
 
@@ -76,15 +93,24 @@ token = config.get('main-section', 'api_token')
 default_limit = config.get('main-section', 'default_limit')
 application_title = config.get('main-section', 'application_title')
 database_name = config.get('main-section', 'database_name')
+# try:
 print("calling api driver :" + account + ":" + token + ":" + default_limit)
-driver_object = Driver()
-latest = driver_object.perform_get_skeets(account, token)
+client_wrapper = ClientWrapper(account, token)
+c = client_wrapper.init_client()
+latest = perform_get_skeets(c)
 df = pd.DataFrame(latest, columns=['uri', 'txt'])
+# except Exception as e:
+#     print(e)
+#     filler = []
+#     filler.append({'uri': 'dummy uri', 'txt': 'dummy text'})
+#     filler.append({'uri': 'dummy uri2', 'txt': 'dummy text2'})
+#     filler.append({'uri': 'dummy uri3', 'txt': 'dummy text3'})
+#     df=pd.DataFrame(filler, columns=['uri', 'txt'])
 
 #gui definitions
 root = Tk()
 root.title (application_title)
-root.geometry("400x300")
+root.geometry("600x500")
 app = BlueSkyReader(df, master=root)
 app.mainloop()
 root.destroy()
