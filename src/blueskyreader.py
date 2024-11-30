@@ -61,7 +61,7 @@ class BlueSkyReader(Frame):
             print("opening the detail window.")
             detail_window = tkinter.Toplevel()
             detail_window.title("Detail Pane")
-            detail_window.geometry("500x400")
+            detail_window.geometry("400x400")
             detail_frame = Frame(detail_window)
             detail_frame.pack(fill="both", expand=True)
             t = self.df.iloc[self.current_table_row,0]
@@ -73,6 +73,13 @@ class BlueSkyReader(Frame):
             timeLabel.pack(side=tk.TOP,padx=2, pady=2)
             uriLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=u)
             uriLabel.pack(side=tk.TOP,padx=2, pady=2)
+            likes_count = 0
+            likes_label = Label(detail_frame, text=likes_count).pack(side=tk.LEFT)
+            cur_dir = os.getcwd()
+            photo = PhotoImage(file=f'{cur_dir}\\assets\\heart-icon.png')
+            photo.img = photo
+            likesButton = Button(detail_frame, image=photo).pack(side=tk.LEFT)
+
             #print(self.df)
 
     def refresh_dataframe(self, var):
@@ -106,18 +113,6 @@ class BlueSkyReader(Frame):
             print('clicks:', clicks)
         except:
             print('Error')
-        if clicks:
-            # Now we try to get the value of the row+col that was clicked.
-            try:
-                print('single cell:', self.pt.model.getValueAt(clicks[0], clicks[1]))
-            except:
-                print('No record at:', clicks)
-
-            # This is how you can get the entire contents of a row.
-            try:
-                print('entire record:', self.pt.model.getRecordAtRow(clicks[0]))
-            except:
-                print('No record at:', clicks)
 
 application_title = ""
 database_name = ""
@@ -135,18 +130,18 @@ default_limit = config.get('main-section', 'default_limit')
 application_title = config.get('main-section', 'application_title')
 database_name = config.get('main-section', 'database_name')
 # try:
-print("calling api driver :" + account + ":" + token + ":" + default_limit)
-client_wrapper = ClientWrapper(account, token)
-c = client_wrapper.init_client()
-latest = Driver().perform_get_skeets(c)
-df = pd.DataFrame(latest, columns=['txt','time', 'uri'])
+#     print("calling api driver :" + account + ":" + token + ":" + default_limit)
+#     client_wrapper = ClientWrapper(account, token)
+#     c = client_wrapper.init_client()
+#     latest = Driver().perform_get_skeets(c)
+#     df = pd.DataFrame(latest, columns=['txt','time', 'uri'])
 # except Exception as e:
 #     print(e)
-#     filler = []
-#     filler.append({'uri': 'dummy uri', 'txt': 'dummy text'})
-#     filler.append({'uri': 'dummy uri2', 'txt': 'dummy text2'})
-#     filler.append({'uri': 'dummy uri3', 'txt': 'dummy text3'})
-#     df=pd.DataFrame(filler, columns=['uri', 'txt'])
+filler = []
+filler.append({'date': 'date1', 'txt': 'dummy text', 'uri': 'dummy uri'})
+filler.append({'date': 'date2', 'txt': 'dummy text2', 'uri': 'dummy uri2'})
+filler.append({'date': 'date2', 'txt': 'dummy text3', 'uri': 'dummy uri3'})
+df=pd.DataFrame(filler, columns=['date', 'txt', 'uri'])
 
 #gui definitions
 root = Tk()
