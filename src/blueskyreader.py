@@ -1,3 +1,4 @@
+import tkinter
 from configparser import ConfigParser
 from atproto_client import Client
 import os
@@ -9,10 +10,9 @@ from pandastable import Table, TableModel
 import pandas as pd
 
 class BlueSkyReader(Frame):
-    def say_hi(self):
-        print("hi there, everyone!")
 
     def createWidgets(self):
+        self.current_table_row=0
         menu = Menu(root)
         root.config(menu=menu)
         subMenu = Menu(root)
@@ -52,10 +52,28 @@ class BlueSkyReader(Frame):
         self.df = df
         self.pack()
         self.createWidgets()
+        root.bind('<ButtonRelease-1>', self.clicked)
 
     def create_detail(self):
-        print("opening the detail window.")
-        print(self.df)
+        if self.current_table_row == 0:
+            print("No row currently selefcted.")
+        else:
+            print("opening the detail window.")
+            detail_window = tkinter.Toplevel()
+            detail_window.title("Detail Pane")
+            detail_window.geometry("500x400")
+            detail_frame = Frame(detail_window)
+            detail_frame.pack(fill="both", expand=True)
+            t = self.df.iloc[self.current_table_row,0]
+            d = self.df.iloc[self.current_table_row,1]
+            u = self.df.iloc[self.current_table_row,2]
+            textLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=t)
+            textLabel.pack(side=tk.TOP, padx=2, pady=2)
+            timeLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=d)
+            timeLabel.pack(side=tk.TOP,padx=2, pady=2)
+            uriLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=u)
+            uriLabel.pack(side=tk.TOP,padx=2, pady=2)
+            #print(self.df)
 
     def refresh_dataframe(self, var):
         page_size = var
@@ -77,6 +95,29 @@ class BlueSkyReader(Frame):
 
     def do_nothing(self):
         pass
+
+    def clicked(self, event):  # Click event callback function.
+        # Probably needs better exception handling, but w/e.
+        try:
+            rclicked = self.pt.get_row_clicked(event)
+            self.current_table_row = rclicked
+            cclicked = self.pt.get_col_clicked(event)
+            clicks = (rclicked, cclicked)
+            print('clicks:', clicks)
+        except:
+            print('Error')
+        if clicks:
+            # Now we try to get the value of the row+col that was clicked.
+            try:
+                print('single cell:', self.pt.model.getValueAt(clicks[0], clicks[1]))
+            except:
+                print('No record at:', clicks)
+
+            # This is how you can get the entire contents of a row.
+            try:
+                print('entire record:', self.pt.model.getRecordAtRow(clicks[0]))
+            except:
+                print('No record at:', clicks)
 
 application_title = ""
 database_name = ""
