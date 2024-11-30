@@ -97,8 +97,8 @@ database_name = config.get('main-section', 'database_name')
 print("calling api driver :" + account + ":" + token + ":" + default_limit)
 client_wrapper = ClientWrapper(account, token)
 c = client_wrapper.init_client()
-latest = perform_get_skeets(c)
-df = pd.DataFrame(latest, columns=['uri', 'txt'])
+latest = Driver().perform_get_skeets(c)
+df = pd.DataFrame(latest, columns=['txt','time', 'uri'])
 # except Exception as e:
 #     print(e)
 #     filler = []

@@ -20,6 +20,7 @@ account = config.get('test-section', 'test_account')
 token = config.get('test-section', 'test_api_token')
 default_limit = config.get('main-section', 'default_limit')
 client_wrapper = ClientWrapper(account, token)
+global client
 client = client_wrapper.init_client()
 
 
@@ -39,7 +40,7 @@ def test_likes():
 
 def test_get():
     test_get_uri = "at://did:plc:7taofukbj2iy22gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
-    post = Driver().find_single_skee(client, test_get_uri)
+    post = Driver().find_single_skeet(client, test_get_uri)
     assert len(post.value.text) > 0
 
 @pytest.mark.skip(reason="The test affects the test account, so by default it should be skipped.")
@@ -47,7 +48,7 @@ def test_delete():
     """
     Test creating a new skeet, query the skeet, then delete the skeet
     """
-    new_skeet_uri = Driver().create_skeet(account, token, "This a test skeet using an api call. It will be deleted momentarily")
+    new_skeet_uri = Driver().create_skeet(client, "This a test skeet using an api call. It will be deleted momentarily")
     print("sleep for 5.....")
     time.sleep(5)
     Driver().find_single_skeet(client, new_skeet_uri)
@@ -60,7 +61,7 @@ def test_find_followers():
     assert len(follows)
 
 def test_json_followers():
-    Driver().create_follower_json(client)
+    Driver().create_follower_json(client, account)
     path = '..//frequency.json'
     try:
         check_file = os.path.isfile(path)
@@ -70,7 +71,7 @@ def test_json_followers():
         assert False
 
 def test_get_latest():
-    skeet_list = Driver().perform_get_skeets(client, default_limit)
+    skeet_list = Driver().perform_get_skeets(client)
     assert len(skeet_list)
 
 
