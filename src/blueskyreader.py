@@ -12,7 +12,7 @@ import pandas as pd
 class BlueSkyReader(Frame):
 
     def createWidgets(self):
-        self.current_table_row=0
+        self.current_table_row=-1
         menu = Menu(root)
         root.config(menu=menu)
         subMenu = Menu(root)
@@ -55,7 +55,7 @@ class BlueSkyReader(Frame):
         root.bind('<ButtonRelease-1>', self.clicked)
 
     def create_detail(self):
-        if self.current_table_row == 0:
+        if self.current_table_row == -1:
             print("No row currently selefcted.")
         else:
             print("opening the detail window.")
@@ -64,16 +64,19 @@ class BlueSkyReader(Frame):
             detail_window.geometry("400x400")
             detail_frame = Frame(detail_window)
             detail_frame.pack(fill="both", expand=True)
-            t = self.df.iloc[self.current_table_row,0]
-            d = self.df.iloc[self.current_table_row,1]
-            u = self.df.iloc[self.current_table_row,2]
+            row = self.current_table_row
+            t = self.df.iloc[row,0]
+            d = self.df.iloc[row,1]
+            uri = self.df.iloc[row,2]
             textLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=t)
             textLabel.pack(side=tk.TOP, padx=2, pady=2)
             timeLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=d)
             timeLabel.pack(side=tk.TOP,padx=2, pady=2)
-            uriLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=u)
+            uriLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=uri)
             uriLabel.pack(side=tk.TOP,padx=2, pady=2)
             likes_count = 0
+            if c:
+                likes_count = Driver().find_skeet_likes(c, uri)
             likes_label = Label(detail_frame, text=likes_count).pack(side=tk.LEFT)
             cur_dir = os.getcwd()
             photo = PhotoImage(file=f'{cur_dir}\\assets\\heart-icon.png')
@@ -116,7 +119,8 @@ class BlueSkyReader(Frame):
 
 application_title = ""
 database_name = ""
-
+#TODO remove after gui testing is complete
+no_api = 0
 # load configuration options
 print("loading config")
 config = ConfigParser()
@@ -130,18 +134,20 @@ default_limit = config.get('main-section', 'default_limit')
 application_title = config.get('main-section', 'application_title')
 database_name = config.get('main-section', 'database_name')
 # try:
-#     print("calling api driver :" + account + ":" + token + ":" + default_limit)
-#     client_wrapper = ClientWrapper(account, token)
-#     c = client_wrapper.init_client()
-#     latest = Driver().perform_get_skeets(c)
-#     df = pd.DataFrame(latest, columns=['txt','time', 'uri'])
+if no_api == 1:
+    filler = []
+    filler.append({'date': 'date1', 'txt': 'dummy text', 'uri': 'dummy uri'})
+    filler.append({'date': 'date2', 'txt': 'dummy text2', 'uri': 'dummy uri2'})
+    filler.append({'date': 'date2', 'txt': 'dummy text3', 'uri': 'dummy uri3'})
+    df = pd.DataFrame(filler, columns=['date', 'txt', 'uri'])
+else:
+    print("calling api driver :" + account + ":" + token + ":" + default_limit)
+    client_wrapper = ClientWrapper(account, token)
+    c = client_wrapper.init_client()
+    latest = Driver().perform_get_skeets(c)
+    df = pd.DataFrame(latest, columns=['txt','time', 'uri'])
 # except Exception as e:
 #     print(e)
-filler = []
-filler.append({'date': 'date1', 'txt': 'dummy text', 'uri': 'dummy uri'})
-filler.append({'date': 'date2', 'txt': 'dummy text2', 'uri': 'dummy uri2'})
-filler.append({'date': 'date2', 'txt': 'dummy text3', 'uri': 'dummy uri3'})
-df=pd.DataFrame(filler, columns=['date', 'txt', 'uri'])
 
 #gui definitions
 root = Tk()
