@@ -35,10 +35,13 @@ def init_data(no_api) -> DataFrame:
     # TODO remove after gui testing is complete
     if no_api == 1:
         filler = []
-        filler.append({'date': 'date1', 'txt': 'dummy text', 'uri': 'dummy uri'})
-        filler.append({'date': 'date2', 'txt': 'dummy text2', 'uri': 'dummy uri2'})
-        filler.append({'date': 'date2', 'txt': 'dummy text3', 'uri': 'dummy uri3'})
-        df = pd.DataFrame(filler, columns=['date', 'txt', 'uri'])
+        filler_text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cill."
+        filler_uri="at://did:plc:b8aofukbj2iy00gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
+        filler_date="2024-11-327T19"
+        filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
+        filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
+        filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
+        df = pd.DataFrame(filler, columns=['txt', 'time', 'uri'])
     else:
         print("calling api driver :" + account + ":" + token + ":" + str(default_limit))
         client_wrapper = ClientWrapper(account, token)
@@ -72,15 +75,14 @@ class BlueSkyReader(Frame):
         toolbar = Frame(root, bg="#747572", relief=tk.RAISED)
         detailButton = Button(toolbar, text="Detail", command=self.create_detail)
         detailButton.pack(side=tk.LEFT, padx=1, pady=1)
-        toolbar.pack(side=tk.TOP, fill=tk.X)
-
-        # Create the variables
         var = StringVar();
         var.set("Select latest limit")
-        options = [5,10,20,50,100]
-        OptionMenu(root, var, *(options), command=self.refresh_dataframe).pack(pady=50)
+        options = [5, 10, 20, 50, 100]
+        option_menu = (OptionMenu(toolbar, var, *(options), command=self.refresh_dataframe)  )
+        option_menu.pack(side=tk.LEFT, padx=1, pady=1)
         self.label_limit = Label(root, font="Calibri,12,bold")
-        self.label_limit.pack(padx=20, pady=20)
+        self.label_limit.pack(side=tk.LEFT, padx=1, pady=1)
+        toolbar.pack(side=tk.TOP, fill=tk.X)
 
         self.label_limit.pack({"side": "left"})
         # Create a frame for the table
@@ -102,40 +104,54 @@ class BlueSkyReader(Frame):
         if self.current_table_row == -1:
             print("No row currently selefcted.")
         else:
-            print("opening the detail window.")
+            # preload icon images
+            cur_dir = os.getcwd()
+            lk_photo = PhotoImage(file=f'{cur_dir}\\assets\\heart-icon.png')
+            lk_photo.img = lk_photo
+            c2c_photo = PhotoImage(file=f'{cur_dir}\\assets\\c2c-icon.png')
+            c2c_photo.img = c2c_photo
+            #create detail window
             detail_window = tkinter.Toplevel()
             detail_window.title("Detail Pane")
-            detail_window.geometry("400x400")
+            detail_window.geometry("440x260")
             detail_frame = Frame(detail_window)
             detail_frame.pack(fill="both", expand=True)
             row = self.current_table_row
             t = self.df.iloc[row,0]
             d = self.df.iloc[row,1]
             uri = self.df.iloc[row,2]
-            textLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=t)
-            textLabel.pack(side=tk.TOP, padx=2, pady=2)
-            timeLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=d)
-            timeLabel.pack(side=tk.TOP,padx=2, pady=2)
-            uriLabel = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=uri)
-            uriLabel.pack(side=tk.TOP,padx=2, pady=2)
+            text_label = Label(detail_frame, font="Calibri,12,bold", text="Skeet Text:")
+            text_label.grid(row=0, column=0, padx=2, pady=2)
+            text_data = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=t)
+            text_data.grid(row=0, column=1, padx=2, pady=2)
+            time_label = Label(detail_frame, font="Calibri,12,bold", text="Date/Time:")
+            time_label.grid(row=1, column=0, padx=2, pady=2)
+            time_data = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=d)
+            time_data.grid(row=1, column=1, padx=2, pady=2)
+            uriLabel = Label(detail_frame, font="Calibri,12,bold", text="Uri:")
+            uriLabel.grid(row=2, column=0, padx=2, pady=2)
+            uri_data = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=uri)
+            uri_data.grid(row=2, column=1, padx=2, pady=2)
+            uri_button = Button(detail_frame, image=c2c_photo, command=self.c2c(uri))
+            uri_button.grid(row=2, column=2, padx=2, pady=2)
             likes_count = 0
-            if c:
-                likes_count = Driver().find_skeet_likes(c, uri)
-            likes_label = Label(detail_frame, text=likes_count).pack(side=tk.LEFT)
-            cur_dir = os.getcwd()
-            photo = PhotoImage(file=f'{cur_dir}\\assets\\heart-icon.png')
-            photo.img = photo
-            likesButton = Button(detail_frame, image=photo).pack(side=tk.LEFT)
+            try:
+                if c:
+                    likes_count = Driver().find_skeet_likes(c, uri)
+            except:
+                pass
+            likes_label = Label(detail_frame, text=likes_count)
+            likes_label.grid(row=3, column=1, padx=2, pady=2)
+            likes_button = Button(detail_frame, image=lk_photo)
+            likes_button.grid(row=3, column=0, padx=2, pady=2)
 
             #print(self.df)
 
     def refresh_dataframe(self, var):
         page_size = var
-        # latest = driver_object.perform_get_skeets(account, token)
-        # full_df = pd.DataFrame(latest, columns=['uri', 'txt'])
         current_page = self.paginate_dataframe(self.df, page_size, 1)
         self.page_df = None
-        self.page_df = pd.DataFrame(current_page, columns=['uri', 'txt'])
+        self.page_df = pd.DataFrame(current_page, columns=['txt', 'time','uri'])
         if self.page_df.empty:
             print("The DataFrame is empty!")
         self.pt.model.df = self.page_df
@@ -150,6 +166,10 @@ class BlueSkyReader(Frame):
     def do_nothing(self):
         pass
 
+    def c2c(self, clip_board_text: str):
+        root.clipboard_append((clip_board_text))
+        print("clipbaord copied text:" + clip_board_text)
+
     def clicked(self, event):  # Click event callback function.
         # Probably needs better exception handling, but w/e.
         try:
@@ -160,10 +180,12 @@ class BlueSkyReader(Frame):
 
 if __name__ == "__main__":
     root = Tk()
-    df = init_data(1)
+    df = init_data(0)
     app = BlueSkyReader(df, master=root)
     root.title(application_title)
-    root.geometry("600x500")
+    root.geometry("650x400")
+    root.eval('tk::PlaceWindow . center')
+    root.clipboard_clear()
     app.mainloop()
 
 

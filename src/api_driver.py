@@ -14,7 +14,7 @@ class Driver:
     def perform_get_skeets(client: Client):
         latest = []
         # try:
-        posts = client.app.bsky.feed.post.list(client.me.did, limit=10)
+        posts = client.app.bsky.feed.post.list(client.me.did, limit=100)
         for uri, post in posts.records.items():
             print("retrieving post - uri : " + uri)
             # likes = self.find_skeet_likes(account, token, uri)
