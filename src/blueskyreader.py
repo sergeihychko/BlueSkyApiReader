@@ -48,7 +48,6 @@ def init_data(no_api) -> DataFrame:
     return df
 
 
-
 class BlueSkyReader(Frame):
     account : str
     token : str
@@ -90,7 +89,6 @@ class BlueSkyReader(Frame):
         # Create the pandastable
         self.pt = Table(self.frame, dataframe=self.df, showtoolbar=True, showstatusbar=True)
         self.pt.show()
-
 
     def __init__(self, df, master=None):
         Frame.__init__(self, master)
@@ -159,19 +157,6 @@ class BlueSkyReader(Frame):
             self.current_table_row = clicked
         except:
             print('Error on click event')
-
-    def load_config(self):
-        # load configuration options
-        config = ConfigParser()
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        config_file_path = os.path.join(script_dir, "..//settings.ini")
-        # Use the config file
-        config.read(config_file_path)
-        self.account = config.get('main-section', 'account')
-        self.token = config.get('main-section', 'api_token')
-        self.default_limit = int(config.get('main-section', 'default_limit'))
-        self.application_title = config.get('main-section', 'application_title')
-        self.database_name = config.get('main-section', 'database_name')
 
 if __name__ == "__main__":
     root = Tk()
