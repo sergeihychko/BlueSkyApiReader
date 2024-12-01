@@ -2,6 +2,10 @@ import tkinter
 from configparser import ConfigParser
 from atproto_client import Client
 import os
+
+from jupyterlab_server.config import load_config
+from pandas.core.interchange.dataframe_protocol import DataFrame
+
 from api_driver import *
 from client_wrapper import ClientWrapper
 from tkinter import *
@@ -9,10 +13,51 @@ import tkinter as tk
 from pandastable import Table, TableModel
 import pandas as pd
 
+#TODO fix this hacky way of initializing config file variables
+config = ConfigParser()
+script_dir = os.path.dirname(os.path.abspath(__file__))
+config_file_path = os.path.join(script_dir, "..//settings.ini")
+# Use the config file
+config.read(config_file_path)
+account = config.get('main-section', 'account')
+token = config.get('main-section', 'api_token')
+default_limit = int(config.get('main-section', 'default_limit'))
+application_title = config.get('main-section', 'application_title')
+database_name = config.get('main-section', 'database_name')
+c: Client
+
+def init_data(no_api) -> DataFrame:
+    """
+    Initialize the dataFrame either with
+    :param no_api: flag to make API calls or pupulate with dummy data for gui dev
+    :return: populated dataFrame object
+    """
+    # TODO remove after gui testing is complete
+    if no_api == 1:
+        filler = []
+        filler.append({'date': 'date1', 'txt': 'dummy text', 'uri': 'dummy uri'})
+        filler.append({'date': 'date2', 'txt': 'dummy text2', 'uri': 'dummy uri2'})
+        filler.append({'date': 'date2', 'txt': 'dummy text3', 'uri': 'dummy uri3'})
+        df = pd.DataFrame(filler, columns=['date', 'txt', 'uri'])
+    else:
+        print("calling api driver :" + account + ":" + token + ":" + str(default_limit))
+        client_wrapper = ClientWrapper(account, token)
+        c = client_wrapper.init_client()
+        latest = Driver().perform_get_skeets(c)
+        df = pd.DataFrame(latest, columns=['txt', 'time', 'uri'])
+    return df
+
+
+
 class BlueSkyReader(Frame):
+    account : str
+    token : str
+    default_limit : int
+    application_title : str
+    database_name: str
+    df: DataFrame
 
     def createWidgets(self):
-        self.current_table_row=-1
         menu = Menu(root)
         root.config(menu=menu)
         subMenu = Menu(root)
@@ -49,6 +94,7 @@ class BlueSkyReader(Frame):
 
     def __init__(self, df, master=None):
         Frame.__init__(self, master)
+        self.current_table_row = -1
         self.df = df
         self.pack()
         self.createWidgets()
@@ -109,53 +155,32 @@ class BlueSkyReader(Frame):
     def clicked(self, event):  # Click event callback function.
         # Probably needs better exception handling, but w/e.
         try:
-            rclicked = self.pt.get_row_clicked(event)
-            self.current_table_row = rclicked
-            cclicked = self.pt.get_col_clicked(event)
-            clicks = (rclicked, cclicked)
-            print('clicks:', clicks)
+            clicked = self.pt.get_row_clicked(event)
+            self.current_table_row = clicked
         except:
-            print('Error')
+            print('Error on click event')
 
-application_title = ""
-database_name = ""
-#TODO remove after gui testing is complete
-no_api = 0
-# load configuration options
-print("loading config")
-config = ConfigParser()
-script_dir = os.path.dirname(os.path.abspath(__file__))
-config_file_path = os.path.join(script_dir, "..//settings.ini")
-# Use the config file
-config.read(config_file_path)
-account = config.get('main-section', 'account')
-token = config.get('main-section', 'api_token')
-default_limit = config.get('main-section', 'default_limit')
-application_title = config.get('main-section', 'application_title')
-database_name = config.get('main-section', 'database_name')
-# try:
-if no_api == 1:
-    filler = []
-    filler.append({'date': 'date1', 'txt': 'dummy text', 'uri': 'dummy uri'})
-    filler.append({'date': 'date2', 'txt': 'dummy text2', 'uri': 'dummy uri2'})
-    filler.append({'date': 'date2', 'txt': 'dummy text3', 'uri': 'dummy uri3'})
-    df = pd.DataFrame(filler, columns=['date', 'txt', 'uri'])
-else:
-    print("calling api driver :" + account + ":" + token + ":" + default_limit)
-    client_wrapper = ClientWrapper(account, token)
-    c = client_wrapper.init_client()
-    latest = Driver().perform_get_skeets(c)
-    df = pd.DataFrame(latest, columns=['txt','time', 'uri'])
-# except Exception as e:
-#     print(e)
+    def load_config(self):
+        # load configuration options
+        config = ConfigParser()
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file_path = os.path.join(script_dir, "..//settings.ini")
+        # Use the config file
+        config.read(config_file_path)
+        self.account = config.get('main-section', 'account')
+        self.token = config.get('main-section', 'api_token')
+        self.default_limit = int(config.get('main-section', 'default_limit'))
+        self.application_title = config.get('main-section', 'application_title')
+        self.database_name = config.get('main-section', 'database_name')
 
-#gui definitions
-root = Tk()
-root.title (application_title)
-root.geometry("600x500")
-app = BlueSkyReader(df, master=root)
-app.mainloop()
-root.destroy()
+if __name__ == "__main__":
+    root = Tk()
+    df = init_data(1)
+    app = BlueSkyReader(df, master=root)
+    root.title(application_title)
+    root.geometry("600x500")
+    app.mainloop()
+
 
 
 
