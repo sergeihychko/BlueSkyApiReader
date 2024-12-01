@@ -23,3 +23,8 @@ pytest has many command line options with a powerful discovery mechanism:
 It is also possible to run pytest directly with the "pytest" or "py.test" command, instead of using the longer "python -m pytest" module form. However, the shorter command does not append the current directory path to PYTHONPATH.
 
 Configuration settings may also be added to "pytest.ini".
+
+Note:
+-----------------
+To run the project you need to create a **settings.ini** file in the project directory, from the example_settings.ini file.
+The account and token need to be set to valid values. Information on creating App passwords may be found at: https://blueskyfeeds.com/en/faq-app-password
