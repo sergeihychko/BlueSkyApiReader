@@ -1,5 +1,8 @@
 # BlueSkyApiReader
-First attempt to use the available API calls to read and sort posts from BlueSky
+First attempt to use the available API calls to read and sort posts from BlueSky.
+The original goal was to easily build off the atproto stack and create widget tools to schedule posts, and this can be implemented later.
+The choice of a simple (albeit ugly) tkinter interface was just for rapid dev.
+Future ideas include a simple set of flask endpoints and web front end; however this was done quickly as a proof of concept.
 
 Project Structure
 -----------------
