@@ -24,40 +24,23 @@ token = config.get('main-section', 'api_token')
 default_limit = int(config.get('main-section', 'default_limit'))
 application_title = config.get('main-section', 'application_title')
 database_name = config.get('main-section', 'database_name')
-c: Client
-
-def init_data(no_api) -> DataFrame:
-    """
-    Initialize the dataFrame either with
-    :param no_api: flag to make API calls or pupulate with dummy data for gui dev
-    :return: populated dataFrame object
-    """
-    # TODO remove after gui testing is complete
-    if no_api == 1:
-        filler = []
-        filler_text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cill."
-        filler_uri="at://did:plc:b8aofukbj2iy00gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
-        filler_date="2024-11-327T19"
-        filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
-        filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
-        filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
-        df = pd.DataFrame(filler, columns=['txt', 'time', 'uri'])
-    else:
-        print("calling api driver :" + account + ":" + token + ":" + str(default_limit))
-        client_wrapper = ClientWrapper(account, token)
-        c = client_wrapper.init_client()
-        latest = Driver().perform_get_skeets(c)
-        df = pd.DataFrame(latest, columns=['txt', 'time', 'uri'])
-    return df
 
 
-class BlueSkyReader(Frame):
+class BlueSkyReader():
     account : str
     token : str
     default_limit : int
     application_title : str
     database_name: str
     df: DataFrame
+    client: Client
+
+    def __init__(self, master=None):
+        self.df = self.init_data(0)
+        self.master = master
+        self.current_table_row = -1
+        self.createWidgets()
+        root.bind('<ButtonRelease-1>', self.clicked)
 
     def createWidgets(self):
         menu = Menu(root)
@@ -66,7 +49,7 @@ class BlueSkyReader(Frame):
         menu.add_cascade(label="File", menu=subMenu)
         subMenu.add_command(label="Refresh", command=self.do_nothing)
         subMenu.add_separator()
-        subMenu.add_command(label="Exit", command=self.quit)
+        subMenu.add_command(label="Exit", command=self.master.quit)
         editMenu = Menu(menu)
         menu.add_cascade(labe="Edit", menu=editMenu)
         editMenu.add_command(label="Redo", command=self.do_nothing)
@@ -92,14 +75,6 @@ class BlueSkyReader(Frame):
         self.pt = Table(self.frame, dataframe=self.df, showtoolbar=True, showstatusbar=True)
         self.pt.show()
 
-    def __init__(self, df, master=None):
-        Frame.__init__(self, master)
-        self.current_table_row = -1
-        self.df = df
-        self.pack()
-        self.createWidgets()
-        root.bind('<ButtonRelease-1>', self.clicked)
-
     def create_detail(self):
         if self.current_table_row == -1:
             print("No row currently selefcted.")
@@ -110,10 +85,12 @@ class BlueSkyReader(Frame):
             lk_photo.img = lk_photo
             c2c_photo = PhotoImage(file=f'{cur_dir}\\assets\\c2c-icon.png')
             c2c_photo.img = c2c_photo
+            thread_photo = PhotoImage(file=f'{cur_dir}\\assets\\thread-icon.png')
+            thread_photo.img = thread_photo
             #create detail window
             detail_window = tkinter.Toplevel()
             detail_window.title("Detail Pane")
-            detail_window.geometry("440x260")
+            detail_window.geometry("440x280")
             detail_frame = Frame(detail_window)
             detail_frame.pack(fill="both", expand=True)
             row = self.current_table_row
@@ -135,17 +112,20 @@ class BlueSkyReader(Frame):
             uri_button = Button(detail_frame, image=c2c_photo, command=self.c2c(uri))
             uri_button.grid(row=2, column=2, padx=2, pady=2)
             likes_count = 0
-            try:
-                if c:
-                    likes_count = Driver().find_skeet_likes(c, uri)
-            except:
-                pass
+            if self.client:
+                likes_count = Driver().find_skeet_likes(self.client, uri)
             likes_label = Label(detail_frame, text=likes_count)
             likes_label.grid(row=3, column=1, padx=2, pady=2)
             likes_button = Button(detail_frame, image=lk_photo)
             likes_button.grid(row=3, column=0, padx=2, pady=2)
+            thread_count = 0
 
-            #print(self.df)
+            if self.client:
+                thread_count = Driver().find_skeet_thread(self.client, uri)
+            thread_label = Label(detail_frame, text=thread_count)
+            thread_label.grid(row=4, column=1, padx=2, pady=2)
+            thread_button = Button(detail_frame, image=thread_photo)
+            thread_button.grid(row=4, column=0, padx=2, pady=2)
 
     def refresh_dataframe(self, var):
         page_size = var
@@ -178,15 +158,38 @@ class BlueSkyReader(Frame):
         except:
             print('Error on click event')
 
+    def init_data(self, no_api) -> DataFrame:
+        """
+        Initialize the dataFrame either with
+        :param no_api: flag to make API calls or pupulate with dummy data for gui dev
+        :return: populated dataFrame object
+        """
+        # TODO remove after gui testing is complete
+        if no_api == 1:
+            filler = []
+            filler_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cill."
+            filler_uri = "at://did:plc:b8aofukbj2iy00gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
+            filler_date = "2024-11-327T19"
+            filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
+            filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
+            filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
+            df = pd.DataFrame(filler, columns=['txt', 'time', 'uri'])
+        else:
+            print("calling api driver :" + account + ":" + token + ":" + str(default_limit))
+            client_wrapper = ClientWrapper(account, token)
+            self.client = client_wrapper.init_client()
+            latest = Driver().perform_get_skeets(self.client)
+            df = pd.DataFrame(latest, columns=['txt', 'time', 'uri'])
+        return df
+
 if __name__ == "__main__":
     root = Tk()
-    df = init_data(0)
-    app = BlueSkyReader(df, master=root)
+    app = BlueSkyReader(master=root)
     root.title(application_title)
     root.geometry("650x400")
     root.eval('tk::PlaceWindow . center')
     root.clipboard_clear()
-    app.mainloop()
+    root.mainloop()
 
 
 

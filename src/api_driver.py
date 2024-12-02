@@ -3,6 +3,10 @@ from atproto import AtUri, models
 from atproto_client import Client
 import json
 import os
+
+from atproto_client.request import Response
+
+
 #from post_data import PostData
 
 class Driver:
@@ -17,8 +21,7 @@ class Driver:
         posts = client.app.bsky.feed.post.list(client.me.did, limit=100)
         for uri, post in posts.records.items():
             print("retrieving post - uri : " + uri)
-            # likes = self.find_skeet_likes(account, token, uri)
-            latest.append({'txt': post.text, 'time': post.created_at, 'uri': uri})  # , 'likes':likes})
+            latest.append({'txt': post.text, 'time': post.created_at, 'uri': uri})
         # except Exception as e: print(e)
         return latest
 
@@ -80,6 +83,17 @@ class Driver:
         print("writing followers list to jason file")
         with open(filename, 'w') as f:
             json.dump(follows, f, indent=4)
+
+    @staticmethod
+    def find_skeet_thread(client: Client, uri: str):
+        count = 0
+        print("Calling feed.post.get")
+        threads = client.app.bsky.feed.get_post_thread(params={'uri': uri})
+        replies = threads.thread.replies
+        print("thread" + str(replies))
+        for reply in replies:
+            count = count + 1
+        return count
 
     def get_deleted(self, client: Client):
         pass
