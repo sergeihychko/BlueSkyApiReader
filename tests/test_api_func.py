@@ -19,8 +19,11 @@ config.read(config_file_path)
 account = config.get('test-section', 'test_account')
 token = config.get('test-section', 'test_api_token')
 default_limit = config.get('main-section', 'default_limit')
+test_likes_uri = config.get('test-section', 'test_likes_uri')
+test_get_uri = config.get('test-section', 'test_thread_uri')
+thread_uri = config.get('test-section', 'test_thread_uri')
+threadless_uri = config.get('test-section', 'test_get_uri')
 client_wrapper = ClientWrapper(account, token)
-global client
 client = client_wrapper.init_client()
 
 
@@ -30,7 +33,6 @@ def test_likes():
     Test the wrapper for the get_likes() function
     """
     like_count = 999
-    test_likes_uri = "at://did:plc:7taofukbj2iy22gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
     like_count = Driver().find_skeet_likes(client, test_likes_uri)
     print("Number of likes : " + str(like_count))
     if like_count == 0:
@@ -39,7 +41,6 @@ def test_likes():
         assert True
 
 def test_get():
-    test_get_uri = "at://did:plc:7taofukbj2iy22gshmk562iu/app.bsky.feed.post/3lbvimzsix22p"
     post = Driver().find_single_skeet(client, test_get_uri)
     assert len(post.value.text) > 0
 
@@ -73,6 +74,14 @@ def test_json_followers():
 def test_get_latest():
     skeet_list = Driver().perform_get_skeets(client)
     assert len(skeet_list)
+
+def test_get_thread():
+    thread_count = Driver().find_skeet_thread(client, thread_uri)
+    assert thread_count != 0
+
+def test_get_thread():
+    thread_count = Driver().find_skeet_thread(client, threadless_uri)
+    assert thread_count == 0
 
 
 
