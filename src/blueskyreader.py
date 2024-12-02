@@ -2,8 +2,6 @@ import tkinter
 from configparser import ConfigParser
 from atproto_client import Client
 import os
-
-from jupyterlab_server.config import load_config
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from api_driver import *
@@ -12,19 +10,6 @@ from tkinter import *
 import tkinter as tk
 from pandastable import Table, TableModel
 import pandas as pd
-
-#TODO fix this hacky way of initializing config file variables
-config = ConfigParser()
-script_dir = os.path.dirname(os.path.abspath(__file__))
-config_file_path = os.path.join(script_dir, "..//settings.ini")
-# Use the config file
-config.read(config_file_path)
-account = config.get('main-section', 'account')
-token = config.get('main-section', 'api_token')
-default_limit = int(config.get('main-section', 'default_limit'))
-application_title = config.get('main-section', 'application_title')
-database_name = config.get('main-section', 'database_name')
-
 
 class BlueSkyReader():
     account : str
@@ -36,6 +21,7 @@ class BlueSkyReader():
     client: Client
 
     def __init__(self, master=None):
+        self.load_config()
         self.df = self.init_data(0)
         self.master = master
         self.current_table_row = -1
@@ -158,6 +144,18 @@ class BlueSkyReader():
         except:
             print('Error on click event')
 
+    def load_config(self):
+        config = ConfigParser()
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file_path = os.path.join(script_dir, "..//settings.ini")
+        # Use the config file
+        config.read(config_file_path)
+        self.account = config.get('main-section', 'account')
+        self.token = config.get('main-section', 'api_token')
+        self.default_limit = int(config.get('main-section', 'default_limit'))
+        self.application_title = config.get('main-section', 'application_title')
+        self.database_name = config.get('main-section', 'database_name')
+
     def init_data(self, no_api) -> DataFrame:
         """
         Initialize the dataFrame either with
@@ -175,8 +173,7 @@ class BlueSkyReader():
             filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
             df = pd.DataFrame(filler, columns=['txt', 'time', 'uri'])
         else:
-            print("calling api driver :" + account + ":" + token + ":" + str(default_limit))
-            client_wrapper = ClientWrapper(account, token)
+            client_wrapper = ClientWrapper(self.account, self.token)
             self.client = client_wrapper.init_client()
             latest = Driver().perform_get_skeets(self.client)
             df = pd.DataFrame(latest, columns=['txt', 'time', 'uri'])
@@ -185,7 +182,7 @@ class BlueSkyReader():
 if __name__ == "__main__":
     root = Tk()
     app = BlueSkyReader(master=root)
-    root.title(application_title)
+    root.title(app.application_title)
     root.geometry("650x400")
     root.eval('tk::PlaceWindow . center')
     root.clipboard_clear()
