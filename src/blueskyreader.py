@@ -2,13 +2,15 @@ import tkinter
 from configparser import ConfigParser
 from atproto_client import Client
 import os
+import asyncio
+import threading
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from api_driver import *
 from client_wrapper import ClientWrapper
 from tkinter import *
 import tkinter as tk
-from pandastable import Table, TableModel
+from pandastable import Table
 import pandas as pd
 
 class BlueSkyReader():
@@ -51,6 +53,8 @@ class BlueSkyReader():
         option_menu.pack(side=tk.LEFT, padx=1, pady=1)
         self.label_limit = Label(root, font="Calibri,12,bold")
         self.label_limit.pack(side=tk.LEFT, padx=1, pady=1)
+        self.follower_button = Button(toolbar, text="Follower Refresh", command=self.follower_button_clicked)
+        self.follower_button.pack(side=tk.RIGHT, padx=1, pady=1)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
         self.label_limit.pack({"side": "left"})
@@ -128,6 +132,16 @@ class BlueSkyReader():
         end_index = start_index + page_size
         print("returning paginated dataframe")
         return df.iloc[start_index:end_index]
+
+    def follower_button_clicked(self):
+        self.follower_button.config(state="disabled")
+        threading.Thread(target=self.run_async_follower_dump).start()
+
+    def run_async_follower_dump(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(Driver().create_follower_json(self.client, self.account))
+        self.follower_button.config(state="normal")
 
     def do_nothing(self):
         pass

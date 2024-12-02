@@ -1,6 +1,7 @@
 
 from atproto import AtUri, models
 from atproto_client import Client
+import asyncio
 import json
 import os
 
@@ -70,7 +71,7 @@ class Driver:
         return unique_authors
 
     @staticmethod
-    def create_follower_json(client: Client, author: str):
+    async def create_follower_json(client: Client, author: str):
         follows = Driver().get_follow_authors(client, author)
         for author in follows:
             print("author :" + str(author))
