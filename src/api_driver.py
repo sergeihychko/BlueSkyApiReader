@@ -58,7 +58,6 @@ class Driver:
 
     @staticmethod
     def get_follow_authors(client: Client, author: str):
-        print(" fetching all the followers of an author")
         cursor = None
         follows = []
         while True:
@@ -67,17 +66,22 @@ class Driver:
             if not fetched.cursor:
                 break
             cursor = fetched.cursor
-        unique_authors = list(set(post.handle for post in follows))
-        return unique_authors
+        # unique_authors = list(set(post.handle for post in follows))
+        # return unique_authors
+        follows_list = []
+        for actor in follows:
+            follows_list.append({'name': actor.display_name, 'handle': actor.handle, 'description': actor.description, 'avatar' :actor.avatar})
+        return follows_list
 
     @staticmethod
     async def create_follower_json(client: Client, author: str):
         follows = Driver().get_follow_authors(client, author)
-        for author in follows:
-            print("author :" + str(author))
+        # for author in follows:
+        #     print("author :" + str(author))
         # create json output file of followers
-        filename = 'frequency.json'
+        filename = '..//frequency.json'
         try:
+            print("attempting to remove file : " + filename)
             os.remove(filename)
         except OSError:
             pass
@@ -88,13 +92,20 @@ class Driver:
     @staticmethod
     def find_skeet_thread(client: Client, uri: str):
         count = 0
-        print("Calling feed.post.get")
         threads = client.app.bsky.feed.get_post_thread(params={'uri': uri})
         replies = threads.thread.replies
         print("thread" + str(replies))
         for reply in replies:
             count = count + 1
         return count
+
+    @staticmethod
+    def get_profile_data(client: Client, profile_uri: str):
+        print("retrieving date for profile :" + profile_uri)
+        profile = client.get_profile(actor=profile_uri)
+
+        print("profile dump :" + profile.display_name + " : " + str(profile))
+        return profile
 
     def get_deleted(self, client: Client):
         pass

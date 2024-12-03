@@ -8,6 +8,7 @@ import pytest
 from src.api_driver import Driver
 from src.client_wrapper import ClientWrapper
 from configparser import ConfigParser
+import asyncio
 import os
 import time
 from atproto_client import Client
@@ -23,6 +24,7 @@ test_likes_uri = config.get('test-section', 'test_likes_uri')
 test_get_uri = config.get('test-section', 'test_thread_uri')
 thread_uri = config.get('test-section', 'test_thread_uri')
 threadless_uri = config.get('test-section', 'test_get_uri')
+test_profile_uri = config.get('test-section', 'test_profile_uri')
 client_wrapper = ClientWrapper(account, token)
 client = client_wrapper.init_client()
 
@@ -62,14 +64,11 @@ def test_find_followers():
     assert len(follows)
 
 def test_json_followers():
-    Driver().create_follower_json(client, account)
-    path = '..//frequency.json'
-    try:
-        check_file = os.path.isfile(path)
-        assert True
-    except:
-        print("JSON file not found")
-        assert False
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(Driver().create_follower_json(client, account))
+    file_path = "..//frequency.json"
+    assert os.path.isfile(file_path), f"File not found: {file_path}"
 
 def test_get_latest():
     skeet_list = Driver().perform_get_skeets(client)
@@ -82,6 +81,10 @@ def test_get_thread():
 def test_get_thread():
     thread_count = Driver().find_skeet_thread(client, threadless_uri)
     assert thread_count == 0
+
+def test_get_profile_data():
+    test_profile = Driver().get_profile_data(client, test_profile_uri)
+    assert test_profile is not None
 
 
 
