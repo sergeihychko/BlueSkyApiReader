@@ -79,7 +79,7 @@ class Driver:
             os.remove(filename)
         except OSError:
             pass
-        print("writing follow list to jason file")
+        print("writing following list to jason file len: " + str(len(following)))
         with open(filename, 'w') as f:
             json.dump(following, f, indent=4)
         print("file : " + filename + " : finished")
@@ -108,7 +108,7 @@ class Driver:
             os.remove(filename)
         except OSError:
             pass
-        print("writing follows list to jason file")
+        print("writing follows list to jason file len: " + str(len(followers)))
         with open(filename, 'w') as f:
             json.dump(followers, f, indent=4)
         print("file : " + filename + " : finished")

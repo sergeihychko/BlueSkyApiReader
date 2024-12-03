@@ -7,6 +7,7 @@ import threading
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from api_driver import *
+from scheduler import Scheduler
 from client_wrapper import ClientWrapper
 from tkinter import *
 import tkinter as tk
@@ -60,6 +61,8 @@ class BlueSkyReader():
         follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
         follower_detail_button = Button(toolbar, text="Following", command=self.create_following_detail)
         follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
+        self.scheduler_button = Button(toolbar, text="Scheduler", command=self.start_thread)
+        self.scheduler_button.pack(side=tk.RIGHT, padx=1, pady=1)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
         self.label_limit.pack({"side": "left"})
@@ -189,6 +192,12 @@ class BlueSkyReader():
 
     def do_nothing(self):
         pass
+
+    def start_thread(self):
+        #TODO thread lifecycle managment needed, this is just a WIP implementation
+        self.scheduler_button.config(state="disabled")
+        thread = Scheduler("My Scheduler Daemon Thread")
+        thread.start()
 
     def c2c(self, clip_board_text: str):
         root.clipboard_append((clip_board_text))
