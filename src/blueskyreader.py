@@ -33,14 +33,17 @@ class BlueSkyReader():
     def createWidgets(self):
         menu = Menu(root)
         root.config(menu=menu)
-        subMenu = Menu(root)
-        menu.add_cascade(label="File", menu=subMenu)
-        subMenu.add_command(label="Refresh", command=self.do_nothing)
-        subMenu.add_separator()
-        subMenu.add_command(label="Exit", command=self.master.quit)
+        self.subMenu = Menu(root)
+        menu.add_cascade(label="File", menu=self.subMenu)
+        self.subMenu.add_command(label="Refresh Follower File", command=self.follower_refresh)
+        self.subMenu.add_command(label="Refresh Following File", command=self.following_refresh)
+        self.subMenu.add_separator()
+        self.subMenu.add_command(label="Exit", command=self.end_application)
         editMenu = Menu(menu)
         menu.add_cascade(labe="Edit", menu=editMenu)
-        editMenu.add_command(label="Redo", command=self.do_nothing)
+        editMenu.add_command(label="Detail", command=self.create_detail)
+        editMenu.add_command(label="Followers", command=self.create_follower_detail)
+        editMenu.add_command(label="Following", command=self.create_following_detail)
 
         # toolbar
         toolbar = Frame(root, bg="#747572", relief=tk.RAISED)
@@ -53,8 +56,10 @@ class BlueSkyReader():
         option_menu.pack(side=tk.LEFT, padx=1, pady=1)
         self.label_limit = Label(root, font="Calibri,12,bold")
         self.label_limit.pack(side=tk.LEFT, padx=1, pady=1)
-        self.follower_button = Button(toolbar, text="Follower Refresh", command=self.follower_button_clicked)
-        self.follower_button.pack(side=tk.RIGHT, padx=1, pady=1)
+        follower_detail_button = Button(toolbar, text="Followers", command=self.create_follower_detail)
+        follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
+        follower_detail_button = Button(toolbar, text="Following", command=self.create_following_detail)
+        follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
         self.label_limit.pack({"side": "left"})
@@ -133,15 +138,54 @@ class BlueSkyReader():
         print("returning paginated dataframe")
         return df.iloc[start_index:end_index]
 
-    def follower_button_clicked(self):
-        self.follower_button.config(state="disabled")
+    def create_follower_detail(self):
+        #TODO add a detail function and a right click mouse even on this table
+        # create follower detail window
+        followers_dataframe = pd.read_json(self.followers_json_file)
+        detail_f_window = tkinter.Toplevel()
+        detail_f_window.title("Follower List : " + str(len(followers_dataframe)))
+        detail_f_window.geometry("300x600")
+        detail_f_frame = Frame(detail_f_window)
+        detail_f_frame.pack(fill="both", expand=True)
+        f_table = Table(detail_f_frame, dataframe=followers_dataframe, showtoolbar=True, showstatusbar=True)
+        f_table.show()
+        detail_f_frame.mainloop()
+
+    def create_following_detail(self):
+        #TODO add a detail function and a right click mouse even on this table
+        # create following detail window
+        following_dataframe = pd.read_json(self.following_json_file)
+        detail_fing_window = tkinter.Toplevel()
+        detail_fing_window.title("Following List : " + str(len(following_dataframe)))
+        detail_fing_window.geometry("300x600")
+        detail_fing_frame = Frame(detail_fing_window)
+        detail_fing_frame.pack(fill="both", expand=True)
+        f_table = Table(detail_fing_frame, dataframe=following_dataframe, showtoolbar=True, showstatusbar=True)
+        f_table.show()
+        detail_fing_frame.mainloop()
+
+    def follower_refresh(self):
+        self.subMenu.entryconfig("Refresh Follower File", state="disabled")
         threading.Thread(target=self.run_async_follower_dump).start()
 
     def run_async_follower_dump(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(Driver().create_follower_json(self.client, self.account))
-        self.follower_button.config(state="normal")
+        loop.run_until_complete(Driver().create_follower_json(self.client, self.account, self.followers_json_file))
+        self.subMenu.entryconfig("Refresh Follower File", state="normal")
+
+    def following_refresh(self):
+        self.subMenu.entryconfig("Refresh Following File", state="disabled")
+        threading.Thread(target=self.run_async_following_dump).start()
+
+    def run_async_following_dump(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(Driver().create_following_json(self.client, self.account, self.following_json_file))
+        self.subMenu.entryconfig("Refresh Following File", state="normal")
+
+    def end_application(self):
+        root.quit()
 
     def do_nothing(self):
         pass
@@ -169,6 +213,8 @@ class BlueSkyReader():
         self.default_limit = int(config.get('main-section', 'default_limit'))
         self.application_title = config.get('main-section', 'application_title')
         self.database_name = config.get('main-section', 'database_name')
+        self.followers_json_file = config.get('main-section', 'followers_json_file')
+        self.following_json_file = config.get('main-section', 'following_json_file')
 
     def init_data(self, no_api) -> DataFrame:
         """

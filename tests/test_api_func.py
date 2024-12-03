@@ -25,6 +25,8 @@ test_get_uri = config.get('test-section', 'test_thread_uri')
 thread_uri = config.get('test-section', 'test_thread_uri')
 threadless_uri = config.get('test-section', 'test_get_uri')
 test_profile_uri = config.get('test-section', 'test_profile_uri')
+followers_json_file = config.get('main-section', 'followers_json_file')
+following_json_file = config.get('main-section', 'following_json_file')
 client_wrapper = ClientWrapper(account, token)
 client = client_wrapper.init_client()
 
@@ -60,14 +62,25 @@ def test_delete():
     Driver().delete_skeet(client, new_skeet_uri)
 
 def test_find_followers():
-    follows = Driver().get_follow_authors(client, account)
+    follows = Driver().get_followers(client, account)
     assert len(follows)
+
+def test_find_following():
+    following = Driver().get_following(client, account)
+    assert len(following)
 
 def test_json_followers():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(Driver().create_follower_json(client, account))
-    file_path = "..//frequency.json"
+    loop.run_until_complete(Driver().create_follower_json(client, account, followers_json_file))
+    file_path = followers_json_file
+    assert os.path.isfile(file_path), f"File not found: {file_path}"
+
+def test_json_following():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(Driver().create_following_json(client, account, following_json_file))
+    file_path = following_json_file
     assert os.path.isfile(file_path), f"File not found: {file_path}"
 
 def test_get_latest():

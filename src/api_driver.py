@@ -57,37 +57,61 @@ class Driver:
         return count
 
     @staticmethod
-    def get_follow_authors(client: Client, author: str):
+    def get_following(client: Client, author: str):
         cursor = None
-        follows = []
+        following = []
         while True:
             fetched = client.app.bsky.graph.get_follows(params={'actor': author, 'cursor': cursor})
-            follows = follows + fetched.follows
+            following = following + fetched.follows
             if not fetched.cursor:
                 break
             cursor = fetched.cursor
-        # unique_authors = list(set(post.handle for post in follows))
-        # return unique_authors
-        follows_list = []
-        for actor in follows:
-            follows_list.append({'name': actor.display_name, 'handle': actor.handle, 'description': actor.description, 'avatar' :actor.avatar})
-        return follows_list
+        following_list = []
+        for actor in following:
+            following_list.append({'name': actor.display_name, 'handle': actor.handle, 'description': actor.description, 'avatar' :actor.avatar})
+        return following_list
 
     @staticmethod
-    async def create_follower_json(client: Client, author: str):
-        follows = Driver().get_follow_authors(client, author)
-        # for author in follows:
-        #     print("author :" + str(author))
-        # create json output file of followers
-        filename = '..//frequency.json'
+    async def create_following_json(client: Client, author: str, filename):
+        following = Driver().get_following(client, author)
         try:
             print("attempting to remove file : " + filename)
             os.remove(filename)
         except OSError:
             pass
-        print("writing followers list to jason file")
+        print("writing follow list to jason file")
         with open(filename, 'w') as f:
-            json.dump(follows, f, indent=4)
+            json.dump(following, f, indent=4)
+        print("file : " + filename + " : finished")
+
+    @staticmethod
+    def get_followers(client: Client, author: str):
+        cursor = None
+        followers = []
+        while True:
+            fetched = client.app.bsky.graph.get_followers(params={'actor': author, 'cursor': cursor})
+            followers = followers + fetched.followers
+            if not fetched.cursor:
+                break
+            cursor = fetched.cursor
+        followers_list = []
+        for actor in followers:
+            followers_list.append({'name': actor.display_name, 'handle': actor.handle, 'description': actor.description,
+                                   'avatar': actor.avatar})
+        return followers_list
+
+    @staticmethod
+    async def create_follower_json(client: Client, author: str, filename):
+        followers = Driver().get_followers(client, author)
+        try:
+            print("attempting to remove file : " + filename)
+            os.remove(filename)
+        except OSError:
+            pass
+        print("writing follows list to jason file")
+        with open(filename, 'w') as f:
+            json.dump(followers, f, indent=4)
+        print("file : " + filename + " : finished")
 
     @staticmethod
     def find_skeet_thread(client: Client, uri: str):
