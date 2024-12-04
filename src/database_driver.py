@@ -71,6 +71,7 @@ def get_future_posts():
     for post in posts:
         # print("one row object")
         # print(post.id, post.uri, post.author, post.txt, post.queued, post.queue_datetime)
-        post_list.append(post)
+        post_list.append({'id':str(post.id), 'uri':str(post.uri), 'author':str(post.author), 'txt':str(post.txt), 'queued':str(post.queued), 'time':str(post.queue_datetime)})
+        #post_list.append(post)
     session.close()
     return post_list

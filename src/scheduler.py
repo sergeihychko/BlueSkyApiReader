@@ -24,6 +24,11 @@ class Scheduler(threading.Thread):
         print("Tread function started at : " + str(datetime.datetime.now()))
         future_post_list = get_future_posts()
         for post in future_post_list:
-            print("post : " + str(post.id) + " : " + post.txt)
+            print("post : " + str(post))
             # if (post.queue_datetime < datetime.datetime.now() and post.queued == True):
             #     call Driver.create_skeet() (method to post with details from post object)
+
+    @staticmethod
+    def return_task_list():
+        future_post_list = get_future_posts()
+        return future_post_list

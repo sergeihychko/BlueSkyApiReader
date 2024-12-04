@@ -10,9 +10,12 @@ from api_driver import *
 from scheduler import Scheduler
 from client_wrapper import ClientWrapper
 from tkinter import *
+from tkinter import ttk
 import tkinter as tk
 from pandastable import Table
 import pandas as pd
+from tkcalendar import Calendar, DateEntry
+from tktimepicker import AnalogPicker, constants, SpinTimePickerOld
 
 class BlueSkyReader():
     account : str
@@ -25,7 +28,7 @@ class BlueSkyReader():
 
     def __init__(self, master=None):
         self.load_config()
-        self.df = self.init_data(0)
+        self.df = self.init_data(1)
         self.master = master
         self.current_table_row = -1
         self.createWidgets()
@@ -39,12 +42,15 @@ class BlueSkyReader():
         self.subMenu.add_command(label="Refresh Follower File", command=self.follower_refresh)
         self.subMenu.add_command(label="Refresh Following File", command=self.following_refresh)
         self.subMenu.add_separator()
-        self.subMenu.add_command(label="Exit", command=self.end_application)
+        self.subMenu.add_command(label="Exit", command=root.quit)
         editMenu = Menu(menu)
         menu.add_cascade(labe="Edit", menu=editMenu)
         editMenu.add_command(label="Detail", command=self.create_detail)
         editMenu.add_command(label="Followers", command=self.create_follower_detail)
         editMenu.add_command(label="Following", command=self.create_following_detail)
+        schedMenu = Menu(menu)
+        menu.add_cascade(label="Scheduler", menu=schedMenu)
+        schedMenu.add_command(label="Detail", command=self.create_schedule_detail)
 
         # toolbar
         toolbar = Frame(root, bg="#747572", relief=tk.RAISED)
@@ -55,7 +61,7 @@ class BlueSkyReader():
         options = [5, 10, 20, 50, 100]
         option_menu = (OptionMenu(toolbar, var, *(options), command=self.refresh_dataframe)  )
         option_menu.pack(side=tk.LEFT, padx=1, pady=1)
-        self.label_limit = Label(root, font="Calibri,12,bold")
+        self.label_limit = Label(root, font="Calibri,10,bold")
         self.label_limit.pack(side=tk.LEFT, padx=1, pady=1)
         follower_detail_button = Button(toolbar, text="Followers", command=self.create_follower_detail)
         follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
@@ -70,7 +76,7 @@ class BlueSkyReader():
         self.frame = tk.Frame(root)
         self.frame.pack(fill="both", expand=True)
         # Create the pandastable
-        self.pt = Table(self.frame, dataframe=self.df, showtoolbar=True, showstatusbar=True)
+        self.pt = Table(self.frame, dataframe=self.df, showtoolbar=False, showstatusbar=True)
         self.pt.show()
 
     def create_detail(self):
@@ -95,17 +101,17 @@ class BlueSkyReader():
             t = self.df.iloc[row,0]
             d = self.df.iloc[row,1]
             uri = self.df.iloc[row,2]
-            text_label = Label(detail_frame, font="Calibri,12,bold", text="Skeet Text:")
+            text_label = Label(detail_frame, font="Calibri,10,bold", text="Skeet Text:")
             text_label.grid(row=0, column=0, padx=2, pady=2)
-            text_data = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=t)
+            text_data = Label(detail_frame, font="Calibri,10,bold", wraplength=300, text=t)
             text_data.grid(row=0, column=1, padx=2, pady=2)
-            time_label = Label(detail_frame, font="Calibri,12,bold", text="Date/Time:")
+            time_label = Label(detail_frame, font="Calibri,10,bold", text="Date/Time:")
             time_label.grid(row=1, column=0, padx=2, pady=2)
-            time_data = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=d)
+            time_data = Label(detail_frame, font="Calibri,10,bold", wraplength=300, text=d)
             time_data.grid(row=1, column=1, padx=2, pady=2)
-            uriLabel = Label(detail_frame, font="Calibri,12,bold", text="Uri:")
+            uriLabel = Label(detail_frame, font="Calibri,10,bold", text="Uri:")
             uriLabel.grid(row=2, column=0, padx=2, pady=2)
-            uri_data = Label(detail_frame, font="Calibri,12,bold", wraplength=300, text=uri)
+            uri_data = Label(detail_frame, font="Calibri,10,bold", wraplength=300, text=uri)
             uri_data.grid(row=2, column=1, padx=2, pady=2)
             uri_button = Button(detail_frame, image=c2c_photo, command=self.c2c(uri))
             uri_button.grid(row=2, column=2, padx=2, pady=2)
@@ -167,6 +173,108 @@ class BlueSkyReader():
         f_table.show()
         detail_fing_frame.mainloop()
 
+    def create_schedule_detail(self):
+        # create schedule detail window
+        sched_list = Scheduler.return_task_list()
+        self.sched_dataframe = pd.DataFrame(sched_list)
+        sched_window = tkinter.Toplevel()
+        sched_window.title("Scheduled Tasks")
+        sched_window.geometry("600x360")
+        self.schedule_table = Table(sched_window, dataframe=self.sched_dataframe, showtoolbar=False, showstatusbar=True)
+        self.schedule_table.show()
+        self.current_schedule_row = 0
+        sched_menu = Menu(sched_window)
+        sched_window.config(menu=sched_menu)
+        sched_subMenu = Menu(sched_window)
+        sched_menu.add_cascade(label="File", menu=sched_subMenu)
+        sched_subMenu.add_command(label="New Post", command=self.new_schedule_post)
+        sched_subMenu.add_command(label="Edit Post", command=self.edit_schedule_post)
+        sched_subMenu.add_separator()
+        sched_subMenu.add_command(label="Exit", command=self.do_nothing)
+
+    def new_schedule_post(self):
+        #TODO all of this method
+        pass
+
+    def edit_schedule_post(self):
+        sd_window = tkinter.Toplevel()
+        sd_window.title("Detail Pane")
+        sd_window.geometry("460x300")
+        detail_frame = Frame(sd_window)
+        detail_frame.pack(fill="both", expand=True)
+        row = self.current_schedule_row
+        id = self.sched_dataframe.iloc[row, 0]
+        author = self.sched_dataframe.iloc[row, 1]
+        uri = self.sched_dataframe.iloc[row, 2]
+        txt = self.sched_dataframe.iloc[row, 3]
+        queued = self.sched_dataframe.iloc[row, 4]
+        queued_date_time = self.sched_dataframe.iloc[row, 5]
+        sd_input_frame = Frame(detail_frame)
+        sd_id_label = Label(sd_input_frame, font="Calibri,10,bold", text="ID:")
+        sd_id_label.grid(row=0, column=0, padx=1, pady=1)
+        sd_id__data = Label(sd_input_frame, font="Calibri,10,bold", text=id)
+        sd_id__data.grid(row=0, column=1, padx=1, pady=1)
+        sd_author_label = Label(sd_input_frame, font="Calibri,10,bold", text="Author")
+        sd_author_label.grid(row=1, column=0, padx=1, pady=1)
+        sd_author_data = Label(sd_input_frame, font="Calibri,10,bold", text=author)
+        sd_author_data.grid(row=1, column=1, padx=1, pady=1)
+        sd_uri_label = Label(sd_input_frame, font="Calibri,10,bold", text="uri:")
+        sd_uri_label.grid(row=2, column=0, padx=1, pady=1)
+        sd_uri_data = Label(sd_input_frame, font="Calibri,10,bold", text=uri)
+        sd_uri_data.grid(row=2, column=1, padx=1, pady=1)
+        sd_body_label = Label(sd_input_frame, font="Calibri,10,bold", text="Body:")
+        sd_body_label.grid(row=3, column=0, padx=1, pady=1)
+        sd_body_data = Text(sd_input_frame, font="Calibri,10,bold", width=40, height=8)
+        sd_body_data.insert("1.0",txt)
+        sd_body_data.grid(row=3, column=1, padx=1, pady=1)
+        sd_input_frame.grid(row=0, column=0)
+        #
+        sd_queued_panel = Frame(detail_frame)
+        sd_queued_label = Label(sd_queued_panel, font="Calibri,10,bold", text="Queued:")
+        sd_queued_label.pack(side=tk.LEFT)
+        queued_var = tk.StringVar(value="True")
+        queued_combo = ttk.Combobox(sd_queued_panel, width=27, values=('True', 'False'), textvariable=queued_var)
+        queued_combo.pack(side=tk.LEFT)
+        sd_queued_panel.grid(row=1, column=0, padx=1, pady=1)
+        #
+        sd_queued_display_panel = Frame(detail_frame)
+        sd_queued_date_label = Label(sd_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
+        sd_queued_date_label.pack(side=tk.LEFT)
+        sd_queued_date_data = Label(sd_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
+        sd_queued_date_data.pack(side=tk.LEFT)
+        sd_queued_date_show = Button(sd_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets', command=self.time_date_widgets)
+        sd_queued_date_show.pack(side=tk.LEFT)
+        sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
+        global t_d_p_window # To access the Time/Date widget window outside the function
+        self.t_d_p_window= None
+        #TODO need the code behind time/date changes in the widget reflecting in the data row.
+
+    def time_date_widgets(self):
+        if self.t_d_p_window is None or not self.t_d_p_window.winfo_exists():
+            t_d_p_window = tkinter.Toplevel()
+            t_d_p_window.title("Time Selector")
+            t_d_p_window.geometry("560x260")
+            sd_queued_time_panel = Frame(t_d_p_window)
+            sd_cal = Calendar(sd_queued_time_panel, font="Calibri,10", selectmode='day', locale='en_US',
+                              cursor="hand1", year=2024, month=12, day=4)
+            sd_cal.pack(side=tk.LEFT)
+            sd_cal.bind("<<DateEntrySelected>>", self.on_date_select)
+            sd_time_picker = AnalogPicker(sd_queued_time_panel)
+            sd_time_picker.pack(side=tk.LEFT)
+            sd_time_picker.bind("<<TimeChanged>>", self.on_time_change)
+            sd_time_picker.pack(side=tk.LEFT)
+            sd_queued_time_panel.pack()
+
+
+    def on_time_change(self, event):
+        print("time change :", event.widget.get_time())
+
+    def on_date_select(self, event):
+        print("date change :", event.widget.get_date())
+
+    def sel_queued(self):
+        pass
+
     def follower_refresh(self):
         self.subMenu.entryconfig("Refresh Follower File", state="disabled")
         threading.Thread(target=self.run_async_follower_dump).start()
@@ -186,9 +294,6 @@ class BlueSkyReader():
         asyncio.set_event_loop(loop)
         loop.run_until_complete(Driver().create_following_json(self.client, self.account, self.following_json_file))
         self.subMenu.entryconfig("Refresh Following File", state="normal")
-
-    def end_application(self):
-        root.quit()
 
     def do_nothing(self):
         pass
