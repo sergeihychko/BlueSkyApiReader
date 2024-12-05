@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from sqlalchemy import MetaData, Table, select, insert, func
+from sqlalchemy import MetaData, Table, select, insert, update, func
 from sqlalchemy.orm import declarative_base, sessionmaker
 from configparser import ConfigParser
 from post_data import PostData
@@ -102,6 +102,35 @@ def insert_scheduled_post(new: PostData):
     with engine.begin() as conn:
         stmt = insert(user_table).values(author=new.author, uri=new.uri, txt=new.txt, queued=True, queue_datetime=new.queue_datetime)
         conn.execute(stmt)
+    return True
+
+def update_scheduled_post(edit: PostData):
+    # Create a session
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    user_table = Table('posts', metadata,
+        id=sa.Column(sa.Integer, primary_key=True),
+        author = sa.Column(sa.String),
+        uri = sa.Column(sa.String),
+        txt = sa.Column(sa.String),
+        queued = sa.Column(sa.Boolean),
+        queue_datetime = sa.Column(sa.DateTime)
+    )
+
+    date_string = str(edit.queue_datetime)
+    format_string = "%Y-%m-%d %H:%M:%S"
+    # Convert string to datetime object
+    datetime_object = datetime.datetime.strptime(date_string, format_string)
+
+    posts = session.query(Post).filter_by(id=edit.id).first()
+    if posts:
+        posts.author=edit.author
+        posts.uri=edit.uri
+        posts.txt=edit.txt
+        posts.queued=bool(edit.queued)
+        posts.queue_datetime=datetime_object
+        session.commit()
     return True
 
 

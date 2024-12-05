@@ -69,8 +69,6 @@ class BlueSkyReader():
         my_options = ['5', '10', '20', '50', '100']
         option_menu = ctk.CTkOptionMenu(toolbar, variable=var, values=my_options, command=self.refresh_dataframe)
         option_menu.pack(side=tk.LEFT)
-        # self.label_limit = ctk.CTkLabel(root)
-        # self.label_limit.pack(side=ctk.LEFT)
         follower_detail_button = ctk.CTkButton(toolbar, text="Followers", command=self.create_follower_detail)
         follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
         follower_detail_button = ctk.CTkButton(toolbar, text="Following", command=self.create_following_detail)
@@ -78,12 +76,10 @@ class BlueSkyReader():
         self.scheduler_button = ctk.CTkButton(toolbar, text="Scheduler", command=self.start_thread)
         self.scheduler_button.pack(side=tk.RIGHT, padx=1, pady=1)
         toolbar.pack(side=tk.TOP, fill=tk.X)
-
         # Create a frame for the table
         self.frame = ctk.CTkFrame(root)
         self.frame.pack(fill="both", expand=True)
         # Create the pandastable
-        #self.pt = self.create_tabview_from_dataframe(self.df, master)
         self.pt = Table(self.frame, dataframe=self.df, toolbar=None)
         self.pt.show()
         self.pt.hideRowHeader()
@@ -192,6 +188,7 @@ class BlueSkyReader():
         sched_list = Scheduler.return_task_list()
         self.sched_dataframe = pd.DataFrame(sched_list)
         sched_window = tkinter.Toplevel()
+        sched_window.bind('<ButtonRelease-1>', self.scheduler_clicked)
         sched_window.title("Scheduled Tasks")
         sched_window.geometry("600x360")
         self.schedule_table = Table(sched_window, dataframe=self.sched_dataframe, showtoolbar=False, showstatusbar=False)
@@ -245,7 +242,7 @@ class BlueSkyReader():
                                      command=self.time_date_new_widgets)
         sd_n_queued_date_show.pack(side=tk.LEFT)
         sd_n_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
-        self.new_task = PostData(author, None, "", queued, queued_date_time)
+        self.new_task = PostData(None, author, None, "", queued, queued_date_time)
         sd_n_submit_button = Button(detail_frame, font="Calibri,10,bold", text='Save Sceduled Task',
                                   command=self.save_scheduled_task)
         sd_n_submit_button.grid(row=3, column=0)
@@ -255,7 +252,7 @@ class BlueSkyReader():
     def edit_schedule_post(self):
         sd_window = tkinter.Toplevel()
         sd_window.title("Detail Pane")
-        sd_window.geometry("460x300")
+        sd_window.geometry("470x340")
         detail_frame = ctk.CTkFrame(sd_window)
         detail_frame.pack(fill="both", expand=True)
         row = self.current_schedule_row
@@ -266,27 +263,27 @@ class BlueSkyReader():
         queued = self.sched_dataframe.iloc[row, 4]
         queued_date_time = self.sched_dataframe.iloc[row, 5]
         sd_input_frame = ctk.CTkFrame(detail_frame)
-        sd_id_label = Label(sd_input_frame, font="Calibri,10,bold", text="ID:")
+        sd_id_label = CTkLabel(sd_input_frame, text="ID:")
         sd_id_label.grid(row=0, column=0, padx=1, pady=1)
-        sd_id__data = Label(sd_input_frame, font="Calibri,10,bold", text=id)
+        sd_id__data = CTkLabel(sd_input_frame, text=id)
         sd_id__data.grid(row=0, column=1, padx=1, pady=1)
-        sd_author_label = Label(sd_input_frame, font="Calibri,10,bold", text="Author")
+        sd_author_label = CTkLabel(sd_input_frame, text="Author")
         sd_author_label.grid(row=1, column=0, padx=1, pady=1)
-        sd_author_data = Label(sd_input_frame, font="Calibri,10,bold", text=author)
+        sd_author_data = CTkLabel(sd_input_frame, text=author)
         sd_author_data.grid(row=1, column=1, padx=1, pady=1)
-        sd_uri_label = Label(sd_input_frame, font="Calibri,10,bold", text="uri:")
+        sd_uri_label = CTkLabel(sd_input_frame, text="uri:")
         sd_uri_label.grid(row=2, column=0, padx=1, pady=1)
-        sd_uri_data = Label(sd_input_frame, font="Calibri,10,bold", text=uri)
+        sd_uri_data = CTkLabel(sd_input_frame, text=uri)
         sd_uri_data.grid(row=2, column=1, padx=1, pady=1)
-        sd_body_label = Label(sd_input_frame, font="Calibri,10,bold", text="Body:")
+        sd_body_label = CTkLabel(sd_input_frame, text="Body:")
         sd_body_label.grid(row=3, column=0, padx=1, pady=1)
-        sd_body_data = Text(sd_input_frame, font="Calibri,10,bold", width=40, height=8)
-        sd_body_data.insert("1.0",txt)
-        sd_body_data.grid(row=3, column=1, padx=1, pady=1)
+        self.sd_body_data = Text(sd_input_frame, font="Calibri,10,bold", width=40, height=8)
+        self.sd_body_data.insert("1.0",txt)
+        self.sd_body_data.grid(row=3, column=1, padx=1, pady=1)
         sd_input_frame.grid(row=0, column=0)
         #
         sd_queued_panel = ctk.CTkFrame(detail_frame)
-        sd_queued_label = Label(sd_queued_panel, font="Calibri,10,bold", text="Queued:")
+        sd_queued_label = CTkLabel(sd_queued_panel, text="Queued:")
         sd_queued_label.pack(side=tk.LEFT)
         queued_var = tk.StringVar(value="True")
         queued_combo = ttk.Combobox(sd_queued_panel, width=27, values=('True', 'False'), textvariable=queued_var)
@@ -294,13 +291,16 @@ class BlueSkyReader():
         sd_queued_panel.grid(row=1, column=0, padx=1, pady=1)
         #
         sd_queued_display_panel = ctk.CTkFrame(detail_frame)
-        sd_queued_date_label = Label(sd_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
+        sd_queued_date_label = CTkLabel(sd_queued_display_panel, text="Date/Time:")
         sd_queued_date_label.pack(side=tk.LEFT)
-        sd_queued_date_data = Label(sd_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
+        sd_queued_date_data = CTkLabel(sd_queued_display_panel, text=queued_date_time)
         sd_queued_date_data.pack(side=tk.LEFT)
-        sd_queued_date_show = Button(sd_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets', command=self.time_date_edit_widgets)
+        sd_queued_date_show = Button(sd_queued_display_panel, text='Date/Time Widgets', command=self.time_date_edit_widgets)
         sd_queued_date_show.pack(side=tk.LEFT)
         sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
+        self.edit_task = PostData(int(id), author, uri, txt, queued, queued_date_time)
+        sd_n_submit_button = ctk.CTkButton(detail_frame, text='Save Sceduled Task', command=self.save_edited_scheduled_task)
+        sd_n_submit_button.grid(row=3, column=0)
         global t_d_p_window # To access the Time/Date widget window outside the function
         self.t_d_p_window= None
         #TODO need the code behind time/date changes in the widget reflecting in the data row.
@@ -345,13 +345,20 @@ class BlueSkyReader():
         print("date change :", event.widget.get_date())
 
     def save_scheduled_task(self):
-        print("New task saved... just kidding !")
         self.new_task.txt =self.sd_n_body_data.get("1.0", tk.END)
         commit = insert_scheduled_post(self.new_task)
         if commit:
             messagebox.showinfo("Information", "Task was saved successfully")
         else:
             messagebox.showinfo("Information", "Error while saving task")
+
+    def save_edited_scheduled_task(self):
+        self.edit_task.txt = self.sd_body_data.get("1.0", tk.END)
+        commit = update_scheduled_post(self.edit_task)
+        if commit:
+            messagebox.showinfo("Information", "Task was updated successfully")
+        else:
+            messagebox.showinfo("Information", "Error while updating task")
 
     def sel_queued(self):
         pass
@@ -394,6 +401,14 @@ class BlueSkyReader():
         try:
             clicked = self.pt.get_row_clicked(event)
             self.current_table_row = clicked
+        except:
+            print('Error on click event')
+
+    def scheduler_clicked(self, event):  # Click event callback function.
+        # Probably needs better exception handling, but w/e.
+        try:
+            sclicked = self.schedule_table.get_row_clicked(event)
+            self.current_schedule_row = sclicked
         except:
             print('Error on click event')
 
