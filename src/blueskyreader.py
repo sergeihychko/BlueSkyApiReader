@@ -1,3 +1,4 @@
+import datetime
 import tkinter
 from configparser import ConfigParser
 from doctest import master
@@ -31,7 +32,7 @@ class BlueSkyReader():
 
     def __init__(self, master=None):
         self.load_config()
-        self.df = self.init_data(0)
+        self.df = self.init_data(1)
         self.master = master
         self.current_table_row = -1
         self.createWidgets()
@@ -82,14 +83,6 @@ class BlueSkyReader():
         self.pt = Table(self.frame, dataframe=self.df, toolbar=None)
         self.pt.show()
         self.pt.hideRowHeader()
-
-    # def create_tabview_from_dataframe(self, df, master=None):
-    #     tabview = ctk.CTkTabview(master=master)
-    #     tabview.pack(padx=20, pady=20)
-    #     for column in df.columns:
-    #         tab = tabview.add(column)
-    #         ctk.CTkLabel(tab, text=df[column].to_string()).pack(padx=20, pady=10)
-    #     return tabview
 
     def create_detail(self):
         if self.current_table_row == -1:
@@ -207,8 +200,46 @@ class BlueSkyReader():
         self.schedule_table.hideRowHeader()
 
     def new_schedule_post(self):
-        #TODO all of this method
-        pass
+        sd_window = tkinter.Toplevel()
+        sd_window.title("Detail Pane")
+        sd_window.geometry("460x300")
+        detail_frame = Frame(sd_window)
+        detail_frame.pack(fill="both", expand=True)
+        author =self.account
+        uri = ""
+        txt = ""
+        queued = False
+        queued_date_time = datetime.datetime.now()
+        sd_input_frame = Frame(detail_frame)
+        sd_author_label = Label(sd_input_frame, font="Calibri,10,bold", text="Author:")
+        sd_author_label.grid(row=0, column=0, padx=1, pady=1)
+        sd_author_data = Label(sd_input_frame, font="Calibri,10,bold", text=author)
+        sd_author_data.grid(row=0, column=1, padx=1, pady=1)
+        sd_body_label = Label(sd_input_frame, font="Calibri,10,bold", text="Body:")
+        sd_body_label.grid(row=1, column=0, padx=1, pady=1)
+        sd_body_data = Text(sd_input_frame, font="Calibri,10,bold", width=40, height=8)
+        sd_body_data.insert("1.0", txt)
+        sd_body_data.grid(row=1, column=1, padx=1, pady=1)
+        sd_image_label = Label(sd_input_frame, font="Calibri,10,bold", text="Attachments:")
+        sd_image_label.grid(row=2, column=0, padx=1, pady=1)
+        sd_image_data = Button(sd_input_frame, font="Calibri,10,bold", text="Click to select attachment")
+        sd_image_data.grid(row=2, column=1, padx=1, pady=1)
+        sd_input_frame.grid(row=0, column=0)
+        #
+        sd_queued_display_panel = Frame(detail_frame)
+        sd_queued_date_label = Label(sd_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
+        sd_queued_date_label.pack(side=tk.LEFT)
+        sd_queued_date_data = Label(sd_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
+        sd_queued_date_data.pack(side=tk.LEFT)
+        sd_queued_date_show = Button(sd_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets',
+                                     command=self.time_date_new_widgets)
+        sd_queued_date_show.pack(side=tk.LEFT)
+        sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
+        sd_submit_button = Button(detail_frame, font="Calibri,10,bold", text='Save Sceduled Task',
+                                  command=self.save_scheduled_task)
+        sd_submit_button.grid(row=3, column=0)
+        global n_t_d_p_window  # To access the Time/Date widget window outside the function
+        self.n_t_d_p_window = None
 
     def edit_schedule_post(self):
         sd_window = tkinter.Toplevel()
@@ -256,19 +287,34 @@ class BlueSkyReader():
         sd_queued_date_label.pack(side=tk.LEFT)
         sd_queued_date_data = Label(sd_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
         sd_queued_date_data.pack(side=tk.LEFT)
-        sd_queued_date_show = Button(sd_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets', command=self.time_date_widgets)
+        sd_queued_date_show = Button(sd_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets', command=self.time_date_edit_widgets)
         sd_queued_date_show.pack(side=tk.LEFT)
         sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
         global t_d_p_window # To access the Time/Date widget window outside the function
         self.t_d_p_window= None
         #TODO need the code behind time/date changes in the widget reflecting in the data row.
 
-    def time_date_widgets(self):
+    def time_date_edit_widgets(self):
         if self.t_d_p_window is None or not self.t_d_p_window.winfo_exists():
             t_d_p_window = tkinter.Toplevel()
             t_d_p_window.title("Time Selector")
             t_d_p_window.geometry("560x260")
             sd_queued_time_panel = Frame(t_d_p_window)
+            sd_cal = Calendar(sd_queued_time_panel, font="Calibri,10", selectmode='day', locale='en_US',
+                              cursor="hand1", year=2024, month=12, day=4)
+            sd_cal.pack(side=tk.LEFT)
+            sd_cal.bind("<<DateEntrySelected>>", self.on_date_select)
+            sd_time_picker = AnalogPicker(sd_queued_time_panel)
+            sd_time_picker.pack(side=tk.LEFT)
+            sd_time_picker.bind("<<TimeChanged>>", self.on_time_change)
+            sd_queued_time_panel.pack()
+
+    def time_date_new_widgets(self):
+        if self.n_t_d_p_window is None or not self.n_t_d_p_window.winfo_exists():
+            n_t_d_p_window = tkinter.Toplevel()
+            n_t_d_p_window.title("Time Selector")
+            n_t_d_p_window.geometry("560x260")
+            sd_queued_time_panel = Frame(n_t_d_p_window)
             sd_cal = Calendar(sd_queued_time_panel, font="Calibri,10", selectmode='day', locale='en_US',
                               cursor="hand1", year=2024, month=12, day=4)
             sd_cal.pack(side=tk.LEFT)
@@ -284,6 +330,9 @@ class BlueSkyReader():
 
     def on_date_select(self, event):
         print("date change :", event.widget.get_date())
+
+    def save_scheduled_task(self):
+        print("New task saved... just kidding !")
 
     def sel_queued(self):
         pass

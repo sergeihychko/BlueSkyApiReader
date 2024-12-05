@@ -103,7 +103,7 @@ def test_get_profile_data():
 
 @pytest.mark.skip("This test should only be run manually as all tests posting to the profile account")
 def test_post_with_image():
-    text = "This image was a test post via atproto API. I try to run tests during the lightest traffic time of day on BlueSky"
+    text = "This image was a test post via atproto API. I try to run tests during the lightest traffic time of day on BlueSky, and test posts are deleted automatically. Apologies if you're a human looking at this."
     post_status = Driver().post_with_image(client, text, test_image_path)
     assert post_status
 
