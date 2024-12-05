@@ -31,7 +31,7 @@ class BlueSkyReader():
 
     def __init__(self, master=None):
         self.load_config()
-        self.df = self.init_data(1)
+        self.df = self.init_data(0)
         self.master = master
         self.current_table_row = -1
         self.createWidgets()
@@ -276,7 +276,6 @@ class BlueSkyReader():
             sd_time_picker = AnalogPicker(sd_queued_time_panel)
             sd_time_picker.pack(side=tk.LEFT)
             sd_time_picker.bind("<<TimeChanged>>", self.on_time_change)
-            sd_time_picker.pack(side=tk.LEFT)
             sd_queued_time_panel.pack()
 
 

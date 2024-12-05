@@ -11,6 +11,7 @@ from configparser import ConfigParser
 import asyncio
 import os
 import time
+from tkinter import PhotoImage
 from atproto_client import Client
 
 config = ConfigParser()
@@ -27,6 +28,7 @@ threadless_uri = config.get('test-section', 'test_get_uri')
 test_profile_uri = config.get('test-section', 'test_profile_uri')
 followers_json_file = config.get('main-section', 'followers_json_file')
 following_json_file = config.get('main-section', 'following_json_file')
+test_image_path = config.get('test-section', 'test_image_path')
 client_wrapper = ClientWrapper(account, token)
 client = client_wrapper.init_client()
 
@@ -99,5 +101,9 @@ def test_get_profile_data():
     test_profile = Driver().get_profile_data(client, test_profile_uri)
     assert test_profile is not None
 
-
+@pytest.mark.skip("This test should only be run manually as all tests posting to the profile account")
+def test_post_with_image():
+    text = "This image was a test post via atproto API. I try to run tests during the lightest traffic time of day on BlueSky"
+    post_status = Driver().post_with_image(client, text, test_image_path)
+    assert post_status
 

@@ -136,3 +136,15 @@ class Driver:
         # print("calling get deleted posts")
         # driver_object.get_deleted(account, token)
 
+    @staticmethod
+    def post_with_image(self, client: Client, post_text: str, image_path: str):
+        status = True
+        # Post with an image
+        try:
+            with open(image_path, 'rb') as f:
+                img_data = f.read()
+                client.send_image(text=post_text, image=img_data, image_alt="Teat image description")
+        except:
+            print("Failure posting with image")
+            status = False
+        return status
