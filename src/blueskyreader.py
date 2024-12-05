@@ -36,7 +36,7 @@ class BlueSkyReader():
 
     def __init__(self, master=None):
         self.load_config()
-        self.df = self.init_data(1)
+        self.df = self.init_data(0)
         self.master = master
         self.current_table_row = -1
         self.createWidgets()
