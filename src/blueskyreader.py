@@ -1,5 +1,7 @@
 import tkinter
 from configparser import ConfigParser
+from doctest import master
+
 from atproto_client import Client
 import os
 import asyncio
@@ -11,6 +13,7 @@ from scheduler import Scheduler
 from client_wrapper import ClientWrapper
 from tkinter import *
 from tkinter import ttk
+import customtkinter as ctk
 import tkinter as tk
 from pandastable import Table
 import pandas as pd
@@ -53,31 +56,40 @@ class BlueSkyReader():
         schedMenu.add_command(label="Detail", command=self.create_schedule_detail)
 
         # toolbar
-        toolbar = Frame(root, bg="#747572", relief=tk.RAISED)
-        detailButton = Button(toolbar, text="Detail", command=self.create_detail)
-        detailButton.pack(side=tk.LEFT, padx=1, pady=1)
-        var = StringVar();
+        toolbar = ctk.CTkFrame(root)
+        detailButton = ctk.CTkButton(toolbar, text="Detail", command=self.create_detail)
+        detailButton.pack(side=ctk.LEFT)
+        var = StringVar()
         var.set("Select latest limit")
-        options = [5, 10, 20, 50, 100]
-        option_menu = (OptionMenu(toolbar, var, *(options), command=self.refresh_dataframe)  )
-        option_menu.pack(side=tk.LEFT, padx=1, pady=1)
-        self.label_limit = Label(root, font="Calibri,10,bold")
-        self.label_limit.pack(side=tk.LEFT, padx=1, pady=1)
-        follower_detail_button = Button(toolbar, text="Followers", command=self.create_follower_detail)
+        my_options = ['5', '10', '20', '50', '100']
+        option_menu = ctk.CTkOptionMenu(toolbar, variable=var, values=my_options, command=self.refresh_dataframe)
+        option_menu.pack(side=tk.LEFT)
+        # self.label_limit = ctk.CTkLabel(root)
+        # self.label_limit.pack(side=ctk.LEFT)
+        follower_detail_button = ctk.CTkButton(toolbar, text="Followers", command=self.create_follower_detail)
         follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
-        follower_detail_button = Button(toolbar, text="Following", command=self.create_following_detail)
+        follower_detail_button = ctk.CTkButton(toolbar, text="Following", command=self.create_following_detail)
         follower_detail_button.pack(side=tk.LEFT, padx=1, pady=1)
-        self.scheduler_button = Button(toolbar, text="Scheduler", command=self.start_thread)
+        self.scheduler_button = ctk.CTkButton(toolbar, text="Scheduler", command=self.start_thread)
         self.scheduler_button.pack(side=tk.RIGHT, padx=1, pady=1)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
-        self.label_limit.pack({"side": "left"})
         # Create a frame for the table
-        self.frame = tk.Frame(root)
+        self.frame = ctk.CTkFrame(root)
         self.frame.pack(fill="both", expand=True)
         # Create the pandastable
-        self.pt = Table(self.frame, dataframe=self.df, showtoolbar=False, showstatusbar=True)
+        #self.pt = self.create_tabview_from_dataframe(self.df, master)
+        self.pt = Table(self.frame, dataframe=self.df, toolbar=None)
         self.pt.show()
+        self.pt.hideRowHeader()
+
+    # def create_tabview_from_dataframe(self, df, master=None):
+    #     tabview = ctk.CTkTabview(master=master)
+    #     tabview.pack(padx=20, pady=20)
+    #     for column in df.columns:
+    #         tab = tabview.add(column)
+    #         ctk.CTkLabel(tab, text=df[column].to_string()).pack(padx=20, pady=10)
+    #     return tabview
 
     def create_detail(self):
         if self.current_table_row == -1:
@@ -94,7 +106,7 @@ class BlueSkyReader():
             #create detail window
             detail_window = tkinter.Toplevel()
             detail_window.title("Detail Pane")
-            detail_window.geometry("440x280")
+            detail_window.geometry("460x280")
             detail_frame = Frame(detail_window)
             detail_frame.pack(fill="both", expand=True)
             row = self.current_table_row
@@ -133,7 +145,7 @@ class BlueSkyReader():
 
     def refresh_dataframe(self, var):
         page_size = var
-        current_page = self.paginate_dataframe(self.df, page_size, 1)
+        current_page = self.paginate_dataframe(self.df, int(page_size), 1)
         self.page_df = None
         self.page_df = pd.DataFrame(current_page, columns=['txt', 'time','uri'])
         if self.page_df.empty:
@@ -191,6 +203,8 @@ class BlueSkyReader():
         sched_subMenu.add_command(label="Edit Post", command=self.edit_schedule_post)
         sched_subMenu.add_separator()
         sched_subMenu.add_command(label="Exit", command=self.do_nothing)
+        self.schedule_table.show()
+        self.schedule_table.hideRowHeader()
 
     def new_schedule_post(self):
         #TODO all of this method
@@ -357,7 +371,7 @@ if __name__ == "__main__":
     root = Tk()
     app = BlueSkyReader(master=root)
     root.title(app.application_title)
-    root.geometry("650x400")
+    root.geometry("700x400")
     root.eval('tk::PlaceWindow . center')
     root.clipboard_clear()
     root.mainloop()
