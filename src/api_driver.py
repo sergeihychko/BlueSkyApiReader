@@ -137,7 +137,8 @@ class Driver:
         # driver_object.get_deleted(account, token)
 
     @staticmethod
-    def post_with_image(self, client: Client, post_text: str, image_path: str):
+    def post_with_image(client: Client, post_text: str, image_path: str):
+        print("image path inside post_with_image is : " + image_path)
         status = True
         # Post with an image
         try:

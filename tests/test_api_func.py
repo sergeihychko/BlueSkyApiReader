@@ -101,9 +101,14 @@ def test_get_profile_data():
     test_profile = Driver().get_profile_data(client, test_profile_uri)
     assert test_profile is not None
 
-@pytest.mark.skip("This test should only be run manually as all tests posting to the profile account")
+@pytest.mark.skip(reason="This test should only be run manually as all tests posting to the profile account")
 def test_post_with_image():
+    """
+    Test for posting a skeet with an image attachment
+    :return: true if successful post
+    """
     text = "This image was a test post via atproto API. I try to run tests during the lightest traffic time of day on BlueSky, and test posts are deleted automatically. Apologies if you're a human looking at this."
+    print("posting with image : " + test_image_path + " : " + text)
     post_status = Driver().post_with_image(client, text, test_image_path)
     assert post_status
 
