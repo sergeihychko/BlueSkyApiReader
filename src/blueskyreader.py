@@ -7,6 +7,8 @@ from atproto_client import Client
 import os
 import asyncio
 import threading
+
+from customtkinter import CTkLabel
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from api_driver import *
@@ -34,7 +36,7 @@ class BlueSkyReader():
 
     def __init__(self, master=None):
         self.load_config()
-        self.df = self.init_data(0)
+        self.df = self.init_data(1)
         self.master = master
         self.current_table_row = -1
         self.createWidgets()
@@ -102,41 +104,46 @@ class BlueSkyReader():
             detail_window = tkinter.Toplevel()
             detail_window.title("Detail Pane")
             detail_window.geometry("460x280")
-            detail_frame = Frame(detail_window)
+            detail_frame = ctk.CTkFrame(detail_window)
             detail_frame.pack(fill="both", expand=True)
             row = self.current_table_row
             t = self.df.iloc[row,0]
             d = self.df.iloc[row,1]
             uri = self.df.iloc[row,2]
-            text_label = Label(detail_frame, font="Calibri,10,bold", text="Skeet Text:")
+            text_label = CTkLabel(detail_frame, text="Skeet Text:")
             text_label.grid(row=0, column=0, padx=2, pady=2)
-            text_data = Label(detail_frame, font="Calibri,10,bold", wraplength=300, text=t)
+            text_data = CTkLabel(detail_frame, wraplength=300, text=t)
             text_data.grid(row=0, column=1, padx=2, pady=2)
-            time_label = Label(detail_frame, font="Calibri,10,bold", text="Date/Time:")
+            time_label = CTkLabel(detail_frame, text="Date/Time:")
             time_label.grid(row=1, column=0, padx=2, pady=2)
-            time_data = Label(detail_frame, font="Calibri,10,bold", wraplength=300, text=d)
+            time_data = CTkLabel(detail_frame, wraplength=300, text=d)
             time_data.grid(row=1, column=1, padx=2, pady=2)
-            uriLabel = Label(detail_frame, font="Calibri,10,bold", text="Uri:")
+            uriLabel = CTkLabel(detail_frame, text="Uri:")
             uriLabel.grid(row=2, column=0, padx=2, pady=2)
-            uri_data = Label(detail_frame, font="Calibri,10,bold", wraplength=300, text=uri)
+            uri_data = CTkLabel(detail_frame, wraplength=300, text=uri)
             uri_data.grid(row=2, column=1, padx=2, pady=2)
             uri_button = Button(detail_frame, image=c2c_photo, command=self.c2c(uri))
             uri_button.grid(row=2, column=2, padx=2, pady=2)
             likes_count = 0
-            if self.client:
-                likes_count = Driver().find_skeet_likes(self.client, uri)
-            likes_label = Label(detail_frame, text=likes_count)
-            likes_label.grid(row=3, column=1, padx=2, pady=2)
-            likes_button = Button(detail_frame, image=lk_photo)
-            likes_button.grid(row=3, column=0, padx=2, pady=2)
-            thread_count = 0
-
-            if self.client:
-                thread_count = Driver().find_skeet_thread(self.client, uri)
-            thread_label = Label(detail_frame, text=thread_count)
-            thread_label.grid(row=4, column=1, padx=2, pady=2)
-            thread_button = Button(detail_frame, image=thread_photo)
-            thread_button.grid(row=4, column=0, padx=2, pady=2)
+            try:
+                if self.client:
+                    likes_count = Driver().find_skeet_likes(self.client, uri)
+                likes_label = CTkLabel(detail_frame, text=likes_count)
+                likes_label.grid(row=3, column=1, padx=2, pady=2)
+                likes_button = Button(detail_frame, image=lk_photo)
+                likes_button.grid(row=3, column=0, padx=2, pady=2)
+                thread_count = 0
+            except:
+                pass
+            try:
+                if self.client:
+                    thread_count = Driver().find_skeet_thread(self.client, uri)
+                thread_label = CTkLabel(detail_frame, text=thread_count)
+                thread_label.grid(row=4, column=1, padx=2, pady=2)
+                thread_button = Button(detail_frame, image=thread_photo)
+                thread_button.grid(row=4, column=0, padx=2, pady=2)
+            except:
+                pass
 
     def refresh_dataframe(self, var):
         page_size = var
@@ -161,7 +168,7 @@ class BlueSkyReader():
         detail_f_window = tkinter.Toplevel()
         detail_f_window.title("Follower List : " + str(len(followers_dataframe)))
         detail_f_window.geometry("300x600")
-        detail_f_frame = Frame(detail_f_window)
+        detail_f_frame = ctk.CTkFrame(detail_f_window)
         detail_f_frame.pack(fill="both", expand=True)
         f_table = Table(detail_f_frame, dataframe=followers_dataframe, showtoolbar=True, showstatusbar=True)
         f_table.show()
@@ -174,7 +181,7 @@ class BlueSkyReader():
         detail_fing_window = tkinter.Toplevel()
         detail_fing_window.title("Following List : " + str(len(following_dataframe)))
         detail_fing_window.geometry("300x600")
-        detail_fing_frame = Frame(detail_fing_window)
+        detail_fing_frame = ctk.CTkFrame(detail_fing_window)
         detail_fing_frame.pack(fill="both", expand=True)
         f_table = Table(detail_fing_frame, dataframe=following_dataframe, showtoolbar=True, showstatusbar=True)
         f_table.show()
@@ -187,8 +194,9 @@ class BlueSkyReader():
         sched_window = tkinter.Toplevel()
         sched_window.title("Scheduled Tasks")
         sched_window.geometry("600x360")
-        self.schedule_table = Table(sched_window, dataframe=self.sched_dataframe, showtoolbar=False, showstatusbar=True)
+        self.schedule_table = Table(sched_window, dataframe=self.sched_dataframe, showtoolbar=False, showstatusbar=False)
         self.schedule_table.show()
+        self.schedule_table.hideRowHeader()
         self.current_schedule_row = 0
         sched_menu = Menu(sched_window)
         sched_window.config(menu=sched_menu)
@@ -205,14 +213,14 @@ class BlueSkyReader():
         sd_n_window = tkinter.Toplevel()
         sd_n_window.title("Detail Pane")
         sd_n_window.geometry("500x280")
-        detail_frame = Frame(sd_n_window)
+        detail_frame = ctk.CTkFrame(sd_n_window)
         detail_frame.pack(fill="both", expand=True)
         author =self.account
         uri = ""
         txt = ""
         queued = False
         queued_date_time = datetime.datetime.now()
-        sd_n_input_frame = Frame(detail_frame)
+        sd_n_input_frame = ctk.CTkFrame(detail_frame)
         sd_n_author_label = Label(sd_n_input_frame, font="Calibri,10,bold", text="Author:")
         sd_n_author_label.grid(row=0, column=0, padx=1, pady=1)
         sd_n_author_data = Label(sd_n_input_frame, font="Calibri,10,bold", text=author)
@@ -228,7 +236,7 @@ class BlueSkyReader():
         sd_n_image_data.grid(row=2, column=1, padx=1, pady=1)
         sd_n_input_frame.grid(row=0, column=0)
         #
-        sd_n_queued_display_panel = Frame(detail_frame)
+        sd_n_queued_display_panel = ctk.CTkFrame(detail_frame)
         sd_n_queued_date_label = Label(sd_n_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
         sd_n_queued_date_label.pack(side=tk.LEFT)
         sd_n_queued_date_data = Label(sd_n_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
@@ -248,7 +256,7 @@ class BlueSkyReader():
         sd_window = tkinter.Toplevel()
         sd_window.title("Detail Pane")
         sd_window.geometry("460x300")
-        detail_frame = Frame(sd_window)
+        detail_frame = ctk.CTkFrame(sd_window)
         detail_frame.pack(fill="both", expand=True)
         row = self.current_schedule_row
         id = self.sched_dataframe.iloc[row, 0]
@@ -257,7 +265,7 @@ class BlueSkyReader():
         txt = self.sched_dataframe.iloc[row, 3]
         queued = self.sched_dataframe.iloc[row, 4]
         queued_date_time = self.sched_dataframe.iloc[row, 5]
-        sd_input_frame = Frame(detail_frame)
+        sd_input_frame = ctk.CTkFrame(detail_frame)
         sd_id_label = Label(sd_input_frame, font="Calibri,10,bold", text="ID:")
         sd_id_label.grid(row=0, column=0, padx=1, pady=1)
         sd_id__data = Label(sd_input_frame, font="Calibri,10,bold", text=id)
@@ -277,7 +285,7 @@ class BlueSkyReader():
         sd_body_data.grid(row=3, column=1, padx=1, pady=1)
         sd_input_frame.grid(row=0, column=0)
         #
-        sd_queued_panel = Frame(detail_frame)
+        sd_queued_panel = ctk.CTkFrame(detail_frame)
         sd_queued_label = Label(sd_queued_panel, font="Calibri,10,bold", text="Queued:")
         sd_queued_label.pack(side=tk.LEFT)
         queued_var = tk.StringVar(value="True")
@@ -285,7 +293,7 @@ class BlueSkyReader():
         queued_combo.pack(side=tk.LEFT)
         sd_queued_panel.grid(row=1, column=0, padx=1, pady=1)
         #
-        sd_queued_display_panel = Frame(detail_frame)
+        sd_queued_display_panel = ctk.CTkFrame(detail_frame)
         sd_queued_date_label = Label(sd_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
         sd_queued_date_label.pack(side=tk.LEFT)
         sd_queued_date_data = Label(sd_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
@@ -302,7 +310,7 @@ class BlueSkyReader():
             t_d_p_window = tkinter.Toplevel()
             t_d_p_window.title("Time Selector")
             t_d_p_window.geometry("560x260")
-            sd_queued_time_panel = Frame(t_d_p_window)
+            sd_queued_time_panel = ctk.CTkFrame(t_d_p_window)
             sd_cal = Calendar(sd_queued_time_panel, font="Calibri,10", selectmode='day', locale='en_US',
                               cursor="hand1", year=2024, month=12, day=4)
             sd_cal.pack(side=tk.LEFT)
@@ -317,7 +325,7 @@ class BlueSkyReader():
             n_t_d_p_window = tkinter.Toplevel()
             n_t_d_p_window.title("Time Selector")
             n_t_d_p_window.geometry("560x260")
-            sd_queued_time_panel = Frame(n_t_d_p_window)
+            sd_queued_time_panel = ctk.CTkFrame(n_t_d_p_window)
             sd_cal = Calendar(sd_queued_time_panel, font="Calibri,10", selectmode='day', locale='en_US',
                               cursor="hand1", year=2024, month=12, day=4)
             sd_cal.pack(side=tk.LEFT)
@@ -329,9 +337,11 @@ class BlueSkyReader():
 
 
     def on_time_change(self, event):
+        print("time change")
         print("time change :", event.widget.get_time())
 
     def on_date_select(self, event):
+        print("date change")
         print("date change :", event.widget.get_date())
 
     def save_scheduled_task(self):
