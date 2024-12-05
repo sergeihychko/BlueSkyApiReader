@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from sqlalchemy import MetaData, Table, select
+from sqlalchemy import MetaData, Table, select, insert, func
 from sqlalchemy.orm import declarative_base, sessionmaker
 from configparser import ConfigParser
 from post_data import PostData
@@ -62,6 +62,14 @@ def populate_dummy_posts():
     # session.add(new_post)
     # session.commit()
 
+def get_next_post_index():
+    # Create a session
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    # Find the maximum value in the 'value' column
+    max_value = session.query(func.max(Post.id)).scalar()
+    return max_value
+
 def get_future_posts():
     # Create a session
     Session = sessionmaker(bind=engine)
@@ -79,15 +87,23 @@ def get_future_posts():
 
 def insert_scheduled_post(new: PostData):
     print("insert_scheduled_post Task contains : " + str(new))
+    index = get_next_post_index() + 1
+    print("index for insertion : " + str(index))
+    #post = Post(author=new.author, uri=new.uri, txt=new.txt, queued=True, queue_datetime=new.queue_datetime)
+    user_table = Table('posts', metadata,
+        id=sa.Column(sa.Integer, primary_key=True),
+        author = sa.Column(sa.String),
+        uri = sa.Column(sa.String),
+        txt = sa.Column(sa.String),
+        queued = sa.Column(sa.Boolean),
+        queue_datetime = sa.Column(sa.DateTime)
+    )
+    # Insert a single row
+    with engine.begin() as conn:
+        stmt = insert(user_table).values(author=new.author, uri=new.uri, txt=new.txt, queued=True, queue_datetime=new.queue_datetime)
+        conn.execute(stmt)
     return True
-    #TODO inset into table sosts
 
-    # Construct the select statement
-    #stmt = select(table)
 
-    # Execute the query and fetch results
-    # with engine.connect() as conn:
-    #     result = conn.execute(stmt)
-    #     for row in result:
-    #         print("row : " + str(row))
+
 
