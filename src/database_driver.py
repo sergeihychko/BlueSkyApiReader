@@ -2,6 +2,7 @@ import sqlalchemy as sa
 from sqlalchemy import MetaData, Table, select
 from sqlalchemy.orm import declarative_base, sessionmaker
 from configparser import ConfigParser
+from post_data import PostData
 import datetime
 import os
 config = ConfigParser()
@@ -75,3 +76,18 @@ def get_future_posts():
         #post_list.append(post)
     session.close()
     return post_list
+
+def insert_scheduled_post(new: PostData):
+    print("insert_scheduled_post Task contains : " + str(new))
+    return True
+    #TODO inset into table sosts
+
+    # Construct the select statement
+    #stmt = select(table)
+
+    # Execute the query and fetch results
+    # with engine.connect() as conn:
+    #     result = conn.execute(stmt)
+    #     for row in result:
+    #         print("row : " + str(row))
+

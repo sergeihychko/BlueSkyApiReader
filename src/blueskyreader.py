@@ -11,9 +11,11 @@ from pandas.core.interchange.dataframe_protocol import DataFrame
 
 from api_driver import *
 from scheduler import Scheduler
+from database_driver import *
+from post_data import PostData
 from client_wrapper import ClientWrapper
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import customtkinter as ctk
 import tkinter as tk
 from pandastable import Table
@@ -200,44 +202,45 @@ class BlueSkyReader():
         self.schedule_table.hideRowHeader()
 
     def new_schedule_post(self):
-        sd_window = tkinter.Toplevel()
-        sd_window.title("Detail Pane")
-        sd_window.geometry("460x300")
-        detail_frame = Frame(sd_window)
+        sd_n_window = tkinter.Toplevel()
+        sd_n_window.title("Detail Pane")
+        sd_n_window.geometry("500x280")
+        detail_frame = Frame(sd_n_window)
         detail_frame.pack(fill="both", expand=True)
         author =self.account
         uri = ""
         txt = ""
         queued = False
         queued_date_time = datetime.datetime.now()
-        sd_input_frame = Frame(detail_frame)
-        sd_author_label = Label(sd_input_frame, font="Calibri,10,bold", text="Author:")
-        sd_author_label.grid(row=0, column=0, padx=1, pady=1)
-        sd_author_data = Label(sd_input_frame, font="Calibri,10,bold", text=author)
-        sd_author_data.grid(row=0, column=1, padx=1, pady=1)
-        sd_body_label = Label(sd_input_frame, font="Calibri,10,bold", text="Body:")
-        sd_body_label.grid(row=1, column=0, padx=1, pady=1)
-        sd_body_data = Text(sd_input_frame, font="Calibri,10,bold", width=40, height=8)
-        sd_body_data.insert("1.0", txt)
-        sd_body_data.grid(row=1, column=1, padx=1, pady=1)
-        sd_image_label = Label(sd_input_frame, font="Calibri,10,bold", text="Attachments:")
-        sd_image_label.grid(row=2, column=0, padx=1, pady=1)
-        sd_image_data = Button(sd_input_frame, font="Calibri,10,bold", text="Click to select attachment")
-        sd_image_data.grid(row=2, column=1, padx=1, pady=1)
-        sd_input_frame.grid(row=0, column=0)
+        sd_n_input_frame = Frame(detail_frame)
+        sd_n_author_label = Label(sd_n_input_frame, font="Calibri,10,bold", text="Author:")
+        sd_n_author_label.grid(row=0, column=0, padx=1, pady=1)
+        sd_n_author_data = Label(sd_n_input_frame, font="Calibri,10,bold", text=author)
+        sd_n_author_data.grid(row=0, column=1, padx=1, pady=1)
+        sd_n_body_label = Label(sd_n_input_frame, font="Calibri,10,bold", text="Body:")
+        sd_n_body_label.grid(row=1, column=0, padx=1, pady=1)
+        self.sd_n_body_data = Text(sd_n_input_frame, font="Calibri,10,bold", width=40, height=8)
+        self.sd_n_body_data.insert("1.0", txt)
+        self.sd_n_body_data.grid(row=1, column=1, padx=1, pady=1)
+        sd_n_image_label = Label(sd_n_input_frame, font="Calibri,10,bold", text="Attachments:")
+        sd_n_image_label.grid(row=2, column=0, padx=1, pady=1)
+        sd_n_image_data = Button(sd_n_input_frame, font="Calibri,10,bold", text="Click to select attachment")
+        sd_n_image_data.grid(row=2, column=1, padx=1, pady=1)
+        sd_n_input_frame.grid(row=0, column=0)
         #
-        sd_queued_display_panel = Frame(detail_frame)
-        sd_queued_date_label = Label(sd_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
-        sd_queued_date_label.pack(side=tk.LEFT)
-        sd_queued_date_data = Label(sd_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
-        sd_queued_date_data.pack(side=tk.LEFT)
-        sd_queued_date_show = Button(sd_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets',
+        sd_n_queued_display_panel = Frame(detail_frame)
+        sd_n_queued_date_label = Label(sd_n_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
+        sd_n_queued_date_label.pack(side=tk.LEFT)
+        sd_n_queued_date_data = Label(sd_n_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
+        sd_n_queued_date_data.pack(side=tk.LEFT)
+        sd_n_queued_date_show = Button(sd_n_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets',
                                      command=self.time_date_new_widgets)
-        sd_queued_date_show.pack(side=tk.LEFT)
-        sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
-        sd_submit_button = Button(detail_frame, font="Calibri,10,bold", text='Save Sceduled Task',
+        sd_n_queued_date_show.pack(side=tk.LEFT)
+        sd_n_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
+        self.new_task = PostData(author, None, "", queued, queued_date_time)
+        sd_n_submit_button = Button(detail_frame, font="Calibri,10,bold", text='Save Sceduled Task',
                                   command=self.save_scheduled_task)
-        sd_submit_button.grid(row=3, column=0)
+        sd_n_submit_button.grid(row=3, column=0)
         global n_t_d_p_window  # To access the Time/Date widget window outside the function
         self.n_t_d_p_window = None
 
@@ -333,6 +336,12 @@ class BlueSkyReader():
 
     def save_scheduled_task(self):
         print("New task saved... just kidding !")
+        self.new_task.txt =self.sd_n_body_data.get("1.0", tk.END)
+        commit = insert_scheduled_post(self.new_task)
+        if commit:
+            messagebox.showinfo("Information", "Task was saved successfully")
+        else:
+            messagebox.showinfo("Information", "Error while saving task")
 
     def sel_queued(self):
         pass
