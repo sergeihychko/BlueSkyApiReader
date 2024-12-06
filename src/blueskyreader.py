@@ -7,6 +7,7 @@ from atproto_client import Client
 import os
 import asyncio
 import threading
+import logging
 
 from customtkinter import CTkLabel
 from pandas.core.interchange.dataframe_protocol import DataFrame
@@ -23,7 +24,8 @@ import tkinter as tk
 from pandastable import Table
 import pandas as pd
 from tkcalendar import Calendar, DateEntry
-from tktimepicker import AnalogPicker, constants, SpinTimePickerOld
+from spin_time_picker import SpinTimePicker
+#from tktimepicker import constants, SpinTimePickerModern
 
 class BlueSkyReader():
     account : str
@@ -33,10 +35,11 @@ class BlueSkyReader():
     database_name: str
     df: DataFrame
     client: Client
+    format_string = "%Y-%m-%d %H:%M:%S"
 
     def __init__(self, master=None):
         self.load_config()
-        self.df = self.init_data(0)
+        self.df = self.init_data(1)
         self.master = master
         self.current_table_row = -1
         self.createWidgets()
@@ -86,7 +89,7 @@ class BlueSkyReader():
 
     def create_detail(self):
         if self.current_table_row == -1:
-            print("No row currently selefcted.")
+            logging.debug("No row currently selefcted.")
         else:
             # preload icon images
             cur_dir = os.getcwd()
@@ -147,14 +150,14 @@ class BlueSkyReader():
         self.page_df = None
         self.page_df = pd.DataFrame(current_page, columns=['txt', 'time','uri'])
         if self.page_df.empty:
-            print("The DataFrame is empty!")
+            logging.debug("The DataFrame is empty!")
         self.pt.model.df = self.page_df
         self.pt.redraw()
 
     def paginate_dataframe(self, df, page_size=10, page_num=1):
         start_index = (page_num - 1) * page_size
         end_index = start_index + page_size
-        print("returning paginated dataframe")
+        logging.debug("returning paginated dataframe")
         return df.iloc[start_index:end_index]
 
     def create_follower_detail(self):
@@ -209,41 +212,42 @@ class BlueSkyReader():
     def new_schedule_post(self):
         sd_n_window = tkinter.Toplevel()
         sd_n_window.title("Detail Pane")
-        sd_n_window.geometry("500x280")
+        sd_n_window.geometry("500x260")
         detail_frame = ctk.CTkFrame(sd_n_window)
         detail_frame.pack(fill="both", expand=True)
         author =self.account
         uri = ""
         txt = ""
         queued = False
-        queued_date_time = datetime.datetime.now()
+        self.sdn_queued_date_time = datetime.datetime.now()
+        #queued_date_time = datetime.datetime.now()
         sd_n_input_frame = ctk.CTkFrame(detail_frame)
-        sd_n_author_label = Label(sd_n_input_frame, font="Calibri,10,bold", text="Author:")
+        sd_n_author_label = CTkLabel(sd_n_input_frame, text="Author:")
         sd_n_author_label.grid(row=0, column=0, padx=1, pady=1)
-        sd_n_author_data = Label(sd_n_input_frame, font="Calibri,10,bold", text=author)
+        sd_n_author_data = CTkLabel(sd_n_input_frame, text=author)
         sd_n_author_data.grid(row=0, column=1, padx=1, pady=1)
-        sd_n_body_label = Label(sd_n_input_frame, font="Calibri,10,bold", text="Body:")
+        sd_n_body_label = CTkLabel(sd_n_input_frame, text="Body:")
         sd_n_body_label.grid(row=1, column=0, padx=1, pady=1)
-        self.sd_n_body_data = Text(sd_n_input_frame, font="Calibri,10,bold", width=40, height=8)
+        self.sd_n_body_data = Text(sd_n_input_frame, width=40, height=8)
         self.sd_n_body_data.insert("1.0", txt)
         self.sd_n_body_data.grid(row=1, column=1, padx=1, pady=1)
-        sd_n_image_label = Label(sd_n_input_frame, font="Calibri,10,bold", text="Attachments:")
+        sd_n_image_label = CTkLabel(sd_n_input_frame, text="Attachments:")
         sd_n_image_label.grid(row=2, column=0, padx=1, pady=1)
-        sd_n_image_data = Button(sd_n_input_frame, font="Calibri,10,bold", text="Click to select attachment")
+        sd_n_image_data = Button(sd_n_input_frame, text="Click to select attachment")
         sd_n_image_data.grid(row=2, column=1, padx=1, pady=1)
         sd_n_input_frame.grid(row=0, column=0)
         #
         sd_n_queued_display_panel = ctk.CTkFrame(detail_frame)
-        sd_n_queued_date_label = Label(sd_n_queued_display_panel, font="Calibri,10,bold", text="Date/Time:")
+        sd_n_queued_date_label = CTkLabel(sd_n_queued_display_panel, text="Date/Time:")
         sd_n_queued_date_label.pack(side=tk.LEFT)
-        sd_n_queued_date_data = Label(sd_n_queued_display_panel, font="Calibri,10,bold", text=queued_date_time)
+        sd_n_queued_date_data = CTkLabel(sd_n_queued_display_panel, text=str(self.sdn_queued_date_time))
         sd_n_queued_date_data.pack(side=tk.LEFT)
-        sd_n_queued_date_show = Button(sd_n_queued_display_panel, font="Calibri,10,bold", text='Date/Time Widgets',
+        sd_n_queued_date_show = ctk.CTkButton(sd_n_queued_display_panel, text='Date/Time Widgets',
                                      command=self.time_date_new_widgets)
         sd_n_queued_date_show.pack(side=tk.LEFT)
         sd_n_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
-        self.new_task = PostData(None, author, None, "", queued, queued_date_time)
-        sd_n_submit_button = Button(detail_frame, font="Calibri,10,bold", text='Save Sceduled Task',
+        self.new_task = PostData(None, author, None, "", queued, self.sdn_queued_date_time)
+        sd_n_submit_button = ctk.CTkButton(detail_frame, text='Save Sceduled Task',
                                   command=self.save_scheduled_task)
         sd_n_submit_button.grid(row=3, column=0)
         global n_t_d_p_window  # To access the Time/Date widget window outside the function
@@ -261,7 +265,8 @@ class BlueSkyReader():
         uri = self.sched_dataframe.iloc[row, 2]
         txt = self.sched_dataframe.iloc[row, 3]
         queued = self.sched_dataframe.iloc[row, 4]
-        queued_date_time = self.sched_dataframe.iloc[row, 5]
+        self.sde_queued_date_time = self.sched_dataframe.iloc[row, 5]
+        self.sde_queued_date_time = self.sde_queued_date_time[: 19]
         sd_input_frame = ctk.CTkFrame(detail_frame)
         sd_id_label = CTkLabel(sd_input_frame, text="ID:")
         sd_id_label.grid(row=0, column=0, padx=1, pady=1)
@@ -293,12 +298,12 @@ class BlueSkyReader():
         sd_queued_display_panel = ctk.CTkFrame(detail_frame)
         sd_queued_date_label = CTkLabel(sd_queued_display_panel, text="Date/Time:")
         sd_queued_date_label.pack(side=tk.LEFT)
-        sd_queued_date_data = CTkLabel(sd_queued_display_panel, text=queued_date_time)
+        sd_queued_date_data = CTkLabel(sd_queued_display_panel, text=self.sde_queued_date_time)
         sd_queued_date_data.pack(side=tk.LEFT)
-        sd_queued_date_show = Button(sd_queued_display_panel, text='Date/Time Widgets', command=self.time_date_edit_widgets)
+        sd_queued_date_show = ctk.CTkButton(sd_queued_display_panel, text='Date/Time Widgets', command=self.time_date_edit_widgets)
         sd_queued_date_show.pack(side=tk.LEFT)
         sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
-        self.edit_task = PostData(int(id), author, uri, txt, queued, queued_date_time)
+        self.edit_task = PostData(int(id), author, uri, txt, queued, self.sde_queued_date_time)
         sd_n_submit_button = ctk.CTkButton(detail_frame, text='Save Sceduled Task', command=self.save_edited_scheduled_task)
         sd_n_submit_button.grid(row=3, column=0)
         global t_d_p_window # To access the Time/Date widget window outside the function
@@ -307,45 +312,73 @@ class BlueSkyReader():
 
     def time_date_edit_widgets(self):
         if self.t_d_p_window is None or not self.t_d_p_window.winfo_exists():
-            t_d_p_window = tkinter.Toplevel()
-            t_d_p_window.title("Time Selector")
-            t_d_p_window.geometry("560x260")
-            sd_queued_time_panel = ctk.CTkFrame(t_d_p_window)
-            sd_cal = Calendar(sd_queued_time_panel, font="Calibri,10", selectmode='day', locale='en_US',
-                              cursor="hand1", year=2024, month=12, day=4)
-            sd_cal.pack(side=tk.LEFT)
-            sd_cal.bind("<<DateEntrySelected>>", self.on_date_select)
-            sd_time_picker = AnalogPicker(sd_queued_time_panel)
-            sd_time_picker.pack(side=tk.LEFT)
-            sd_time_picker.bind("<<TimeChanged>>", self.on_time_change)
+            datetime_object = datetime.datetime.strptime(self.sde_queued_date_time, self.format_string)
+            self.t_d_p_window = tkinter.Toplevel()
+            self.t_d_p_window.title("Time Selector")
+            self.t_d_p_window.geometry("420x230")
+            sd_queued_time_panel = ctk.CTkFrame( self.t_d_p_window)
+            self.sd_edit_cal = Calendar(sd_queued_time_panel, date_pattern='y-mm-dd', selectmode='day', locale='en_US',
+                              cursor="hand1", year=datetime_object.year, month=datetime_object.month, day=datetime_object.day)
+            self.sd_edit_cal.grid(row=0, column=0)
+            logging.debug("time_date_edit_widgets : " + str(datetime_object.year) + ":" + str(datetime_object.month) + ":" + str(datetime_object.day))
+            self.sd_edit_time_picker = SpinTimePicker(sd_queued_time_panel, hour=datetime_object.hour, minute=datetime_object.minute, seconds=datetime_object.second)
+            self.sd_edit_time_picker.grid(row=0, column=1, padx=10, pady=10)
+            sd_time_picker_button = ctk.CTkButton(sd_queued_time_panel, text='Save Date/Time',
+                                               command=self.edit_return_time_date)
+            logging.debug("time_date_edit_widgets : " + str(datetime_object.hour) + ":" + str(datetime_object.minute) + ":" + str(datetime_object.second))
+            sd_time_picker_button.grid(row=1, column=0)
             sd_queued_time_panel.pack()
+            self.t_d_p_window.deiconify()
+        else:
+            self.t_d_p_window.deiconify()
+
+    def edit_return_time_date(self):
+        logging.debug("edit_return_time_date time : " + str(self.sd_edit_time_picker.get_time()))
+        logging.debug("edit_return_time_date date : " + str(self.sd_edit_cal.get_date()))
+        # date_obj = self.sd_edit_cal.get_date()
+        # formatted_date = date_obj.strftime("%y %m %d")
+        new_ts = str(self.sd_edit_cal.get_date()) + " " + str(self.sd_edit_time_picker.get_time())
+        self.sde_queued_date_time = datetime.datetime.strptime(new_ts, self.format_string)
+        logging.debug(" self.sde_queued_date_time date : " + str( self.sde_queued_date_time))
+        self.edit_task.txt = self.sde_queued_date_time
+        self.t_d_p_window.withdraw()
 
     def time_date_new_widgets(self):
         if self.n_t_d_p_window is None or not self.n_t_d_p_window.winfo_exists():
-            n_t_d_p_window = tkinter.Toplevel()
-            n_t_d_p_window.title("Time Selector")
-            n_t_d_p_window.geometry("560x260")
-            sd_queued_time_panel = ctk.CTkFrame(n_t_d_p_window)
-            sd_cal = Calendar(sd_queued_time_panel, font="Calibri,10", selectmode='day', locale='en_US',
-                              cursor="hand1", year=2024, month=12, day=4)
-            sd_cal.pack(side=tk.LEFT)
-            sd_cal.bind("<<DateEntrySelected>>", self.on_date_select)
-            sd_time_picker = AnalogPicker(sd_queued_time_panel)
-            sd_time_picker.pack(side=tk.LEFT)
-            sd_time_picker.bind("<<TimeChanged>>", self.on_time_change)
+            datetime_object = self.sdn_queued_date_time
+            self.n_t_d_p_window = tkinter.Toplevel()
+            self.n_t_d_p_window.title("Time Selector")
+            self.n_t_d_p_window.geometry("420x230")
+            sd_queued_time_panel = ctk.CTkFrame(self.n_t_d_p_window)
+            self.sd_new_cal = Calendar(sd_queued_time_panel, date_pattern='y-mm-dd', selectmode='day', locale='en_US',
+                              cursor="hand1", year=datetime_object.year, month=datetime_object.month, day=datetime_object.day)
+            self.sd_new_cal.grid(row=0, column=0)
+            logging.debug("time_date_new_widgets : " + str(datetime_object.year) + ":" + str(datetime_object.month) + ":" + str(datetime_object.day))
+            self.sd_new_time_picker = SpinTimePicker(sd_queued_time_panel, hour=datetime_object.hour, minute=datetime_object.minute, seconds=datetime_object.second)
+            self.sd_new_time_picker.grid(row=0, column=1, padx=10, pady=10)
+            sd_time_picker_button = ctk.CTkButton(sd_queued_time_panel, text='Save Date/Time',
+                                                  command=self.new_return_time_date)
+            logging.debug("time_date_edit_widgets : " + str(datetime_object.hour) + ":" + str(datetime_object.minute) + ":" + str(datetime_object.second))
+            sd_time_picker_button.grid(row=1, column=0)
             sd_queued_time_panel.pack()
+            self.n_t_d_p_window.deiconify()
+        else:
+            self.n_t_d_p_window.deiconify()
 
-
-    def on_time_change(self, event):
-        print("time change")
-        print("time change :", event.widget.get_time())
-
-    def on_date_select(self, event):
-        print("date change")
-        print("date change :", event.widget.get_date())
+    def new_return_time_date(self):
+        logging.debug("new_return_time_date : " + str(self.sd_new_time_picker.get_time()))
+        logging.debug("edit_return_time_date date : " + str(self.sd_new_cal.get_date()))
+        # date_obj = self.sd_new_cal.get_date()
+        # formatted_date = date_obj.strftime("%y %m %d")
+        new_ts = str(self.sd_new_cal.get_date()) + " " + str(self.sd_new_time_picker.get_time())
+        self.sdn_queued_date_time = datetime.datetime.strptime(new_ts, self.format_string)
+        logging.debug(" self.sdn_queued_date_time date : " + str(self.sdn_queued_date_time))
+        self.new_task.txt = self.sdn_queued_date_time
+        self.n_t_d_p_window.withdraw()
 
     def save_scheduled_task(self):
-        self.new_task.txt =self.sd_n_body_data.get("1.0", tk.END)
+        self.new_task.txt = self.sd_n_body_data.get("1.0", tk.END)
+        logging.debug(" insert_scheduled_post : " + str(self.new_task))
         commit = insert_scheduled_post(self.new_task)
         if commit:
             messagebox.showinfo("Information", "Task was saved successfully")
@@ -354,6 +387,7 @@ class BlueSkyReader():
 
     def save_edited_scheduled_task(self):
         self.edit_task.txt = self.sd_body_data.get("1.0", tk.END)
+        logging.debug(" update_scheduled_post : " + str(self.edit_task))
         commit = update_scheduled_post(self.edit_task)
         if commit:
             messagebox.showinfo("Information", "Task was updated successfully")
@@ -394,7 +428,7 @@ class BlueSkyReader():
 
     def c2c(self, clip_board_text: str):
         root.clipboard_append((clip_board_text))
-        print("clipbaord copied text:" + clip_board_text)
+        logging.debug("clipbaord copied text:" + clip_board_text)
 
     def clicked(self, event):  # Click event callback function.
         # Probably needs better exception handling, but w/e.
@@ -402,7 +436,7 @@ class BlueSkyReader():
             clicked = self.pt.get_row_clicked(event)
             self.current_table_row = clicked
         except:
-            print('Error on click event')
+            logging.debug('Error on click event')
 
     def scheduler_clicked(self, event):  # Click event callback function.
         # Probably needs better exception handling, but w/e.
@@ -410,7 +444,7 @@ class BlueSkyReader():
             sclicked = self.schedule_table.get_row_clicked(event)
             self.current_schedule_row = sclicked
         except:
-            print('Error on click event')
+            logging.debug('Error on click event')
 
     def load_config(self):
         config = ConfigParser()
@@ -450,12 +484,14 @@ class BlueSkyReader():
         return df
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     root = Tk()
     app = BlueSkyReader(master=root)
     root.title(app.application_title)
     root.geometry("700x400")
     root.eval('tk::PlaceWindow . center')
     root.clipboard_clear()
+    #ctk.set_appearance_mode("dark")
     root.mainloop()
 
 
