@@ -40,15 +40,15 @@ class SpinTimePicker(tk.Frame):
 
     def update_hour(self, *args):
         self.hour = self.hour_var.get()
-        print("Value updated:")
+        #print("Value updated:")
 
     def update_minute(self, *args):
         self.minute = self.min_var.get()
-        print("Value updated:")
+        #print("Value updated:")
 
     def update_seconds(self, *args):
         self.seconds = self.sec_var.get()
-        print("Value updated:")
+        #print("Value updated:")
 
     def get_time(self):
         return f"{self.hour}:{self.minute}:{self.seconds}"
