@@ -42,6 +42,7 @@ class BlueSkyReader():
         self.df = self.init_data(1)
         self.master = master
         self.current_table_row = -1
+        self.current_schedule_row = -1
         self.createWidgets()
         root.bind('<ButtonRelease-1>', self.clicked)
 
@@ -62,7 +63,6 @@ class BlueSkyReader():
         schedMenu = Menu(menu)
         menu.add_cascade(label="Scheduler", menu=schedMenu)
         schedMenu.add_command(label="Detail", command=self.create_schedule_detail)
-
         # toolbar
         toolbar = ctk.CTkFrame(root)
         detailButton = ctk.CTkButton(toolbar, text="Detail", command=self.create_detail)
@@ -89,7 +89,8 @@ class BlueSkyReader():
 
     def create_detail(self):
         if self.current_table_row == -1:
-            logging.debug("No row currently selefcted.")
+            logging.debug("No row currently selected.")
+            messagebox.showinfo("Information", "No row currently selected.")
         else:
             # preload icon images
             cur_dir = os.getcwd()
@@ -191,21 +192,36 @@ class BlueSkyReader():
         sched_list = Scheduler.return_task_list()
         self.sched_dataframe = pd.DataFrame(sched_list)
         sched_window = tkinter.Toplevel()
-        sched_window.bind('<ButtonRelease-1>', self.scheduler_clicked)
         sched_window.title("Scheduled Tasks")
         sched_window.geometry("600x360")
-        self.schedule_table = Table(sched_window, dataframe=self.sched_dataframe, showtoolbar=False, showstatusbar=False)
-        self.schedule_table.show()
-        self.schedule_table.hideRowHeader()
-        self.current_schedule_row = 0
+        sched_window.bind('<ButtonRelease-1>', self.scheduler_clicked)
         sched_menu = Menu(sched_window)
+        sched_window.config(menu=sched_menu)
+        self.subMenu = Menu(sched_window)
         sched_window.config(menu=sched_menu)
         sched_subMenu = Menu(sched_window)
         sched_menu.add_cascade(label="File", menu=sched_subMenu)
-        sched_subMenu.add_command(label="New Post", command=self.new_schedule_post)
-        sched_subMenu.add_command(label="Edit Post", command=self.edit_schedule_post)
         sched_subMenu.add_separator()
+        sched_editMenu = Menu(sched_window)
         sched_subMenu.add_command(label="Exit", command=self.do_nothing)
+        sched_menu.add_cascade(label="Edit", menu=sched_editMenu)
+        sched_editMenu.add_command(label="New Post", command=self.new_schedule_post)
+        sched_editMenu.add_command(label="Edit Post", command=self.edit_schedule_post)
+        sched_editMenu.add_command(label="Delete Post", command=self.delete_schedule_post)
+        # toolbar
+        sched_toolbar = ctk.CTkFrame(sched_window)
+        sched_toolbar.pack(side=tk.TOP, fill=tk.X)
+        sched_deleteButton = ctk.CTkButton(sched_toolbar, text="Delete", command=self.delete_schedule_post)
+        sched_deleteButton.pack(side=ctk.LEFT)
+        sched_deleteButton = ctk.CTkButton(sched_toolbar, text="Refresh", command=self.refresh_schedule_table)
+        sched_deleteButton.pack(side=ctk.RIGHT)
+        # frame
+        sched_frame = ctk.CTkFrame(sched_window)
+        # table
+        self.schedule_table = Table(sched_frame, dataframe=self.sched_dataframe, showtoolbar=False, showstatusbar=False)
+        self.schedule_table.show()
+        self.schedule_table.hideRowHeader()
+        sched_frame.pack(fill="both", expand=True)
         self.schedule_table.show()
         self.schedule_table.hideRowHeader()
 
@@ -252,6 +268,26 @@ class BlueSkyReader():
         sd_n_submit_button.grid(row=3, column=0)
         global n_t_d_p_window  # To access the Time/Date widget window outside the function
         self.n_t_d_p_window = None
+
+    def refresh_schedule_table(self):
+        current_sched_list = Scheduler.return_task_list()
+        self.sched_dataframe = pd.DataFrame(current_sched_list)
+
+    def delete_schedule_post(self):
+        if self.current_schedule_row == -1:
+            logging.debug("No row currently selected.")
+            messagebox.showinfo("Information", "No row currently selected.")
+        else:
+            delete_index = self.sched_dataframe.iloc[int(self.current_schedule_row), 0]
+            response = messagebox.askquestion("Question", "Do you want to delete Scheduled Task :" + delete_index + "?")
+            if response == 'yes':
+                commit = delete_scheduled_post(delete_index)
+                if commit:
+                    messagebox.showinfo("Information", "Task was deleted successfully")
+                else:
+                    messagebox.showinfo("Information", "Error while deleting task")
+            else:
+                logging.debug("Aborted delete_scheduled_post")
 
     def edit_schedule_post(self):
         sd_window = tkinter.Toplevel()
@@ -308,7 +344,6 @@ class BlueSkyReader():
         sd_n_submit_button.grid(row=3, column=0)
         global t_d_p_window # To access the Time/Date widget window outside the function
         self.t_d_p_window= None
-        #TODO need the code behind time/date changes in the widget reflecting in the data row.
 
     def time_date_edit_widgets(self):
         if self.t_d_p_window is None or not self.t_d_p_window.winfo_exists():
@@ -398,6 +433,7 @@ class BlueSkyReader():
         pass
 
     def follower_refresh(self):
+        #TODO Refresh is not refreshing the table yet.
         self.subMenu.entryconfig("Refresh Follower File", state="disabled")
         threading.Thread(target=self.run_async_follower_dump).start()
 
@@ -440,6 +476,7 @@ class BlueSkyReader():
 
     def scheduler_clicked(self, event):  # Click event callback function.
         # Probably needs better exception handling, but w/e.
+        logging.debug('Scheduler Window click event')
         try:
             sclicked = self.schedule_table.get_row_clicked(event)
             self.current_schedule_row = sclicked
@@ -466,7 +503,6 @@ class BlueSkyReader():
         :param no_api: flag to make API calls or pupulate with dummy data for gui dev
         :return: populated dataFrame object
         """
-        # TODO remove after gui testing is complete
         if no_api == 1:
             filler = []
             filler_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cill."

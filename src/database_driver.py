@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from sqlalchemy import MetaData, Table, select, insert, update, func
+from sqlalchemy import MetaData, Table, select, insert, update, delete, func
 from sqlalchemy.orm import declarative_base, sessionmaker
 from configparser import ConfigParser
 from post_data import PostData
@@ -109,15 +109,6 @@ def update_scheduled_post(edit: PostData):
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    user_table = Table('posts', metadata,
-        id=sa.Column(sa.Integer, primary_key=True),
-        author = sa.Column(sa.String),
-        uri = sa.Column(sa.String),
-        txt = sa.Column(sa.String),
-        queued = sa.Column(sa.Boolean),
-        queue_datetime = sa.Column(sa.DateTime)
-    )
-
     date_string = str(edit.queue_datetime)
     format_string = "%Y-%m-%d %H:%M:%S"
     # Convert string to datetime object
@@ -133,6 +124,26 @@ def update_scheduled_post(edit: PostData):
         session.commit()
     return True
 
+def delete_scheduled_post(delete_index: int):
+    """
+    Function which attempts to delete a row from the Post table where the id=delete_index
+    :param delete_index: Post.id to delete
+    :return: success or failure
+    """
+    status = True
+    # Create a session
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
+    # Construct the delete statement
+    stmt = delete(Post).where(Post.id == delete_index)  # Replace with your filter condition
+
+    # Execute the statement
+    session.execute(stmt)
+
+    # Commit the changes
+    session.commit()
+
+    return status
 
 
