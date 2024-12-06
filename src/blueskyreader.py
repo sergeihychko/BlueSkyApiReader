@@ -240,8 +240,8 @@ class BlueSkyReader():
         sd_n_queued_display_panel = ctk.CTkFrame(detail_frame)
         sd_n_queued_date_label = CTkLabel(sd_n_queued_display_panel, text="Date/Time:")
         sd_n_queued_date_label.pack(side=tk.LEFT)
-        sd_n_queued_date_data = CTkLabel(sd_n_queued_display_panel, text=str(self.sdn_queued_date_time))
-        sd_n_queued_date_data.pack(side=tk.LEFT)
+        self.sd_n_queued_date_data = CTkLabel(sd_n_queued_display_panel, text=str(self.sdn_queued_date_time))
+        self.sd_n_queued_date_data.pack(side=tk.LEFT)
         sd_n_queued_date_show = ctk.CTkButton(sd_n_queued_display_panel, text='Date/Time Widgets',
                                      command=self.time_date_new_widgets)
         sd_n_queued_date_show.pack(side=tk.LEFT)
@@ -298,8 +298,8 @@ class BlueSkyReader():
         sd_queued_display_panel = ctk.CTkFrame(detail_frame)
         sd_queued_date_label = CTkLabel(sd_queued_display_panel, text="Date/Time:")
         sd_queued_date_label.pack(side=tk.LEFT)
-        sd_queued_date_data = CTkLabel(sd_queued_display_panel, text=self.sde_queued_date_time)
-        sd_queued_date_data.pack(side=tk.LEFT)
+        self.sd_queued_date_data = CTkLabel(sd_queued_display_panel, text=self.sde_queued_date_time)
+        self.sd_queued_date_data.pack(side=tk.LEFT)
         sd_queued_date_show = ctk.CTkButton(sd_queued_display_panel, text='Date/Time Widgets', command=self.time_date_edit_widgets)
         sd_queued_date_show.pack(side=tk.LEFT)
         sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
@@ -333,14 +333,14 @@ class BlueSkyReader():
             self.t_d_p_window.deiconify()
 
     def edit_return_time_date(self):
-        logging.debug("edit_return_time_date time : " + str(self.sd_edit_time_picker.get_time()))
         logging.debug("edit_return_time_date date : " + str(self.sd_edit_cal.get_date()))
-        # date_obj = self.sd_edit_cal.get_date()
-        # formatted_date = date_obj.strftime("%y %m %d")
+        logging.debug("edit_return_time_date time : " + str(self.sd_edit_time_picker.get_time()))
         new_ts = str(self.sd_edit_cal.get_date()) + " " + str(self.sd_edit_time_picker.get_time())
         self.sde_queued_date_time = datetime.datetime.strptime(new_ts, self.format_string)
-        logging.debug(" self.sde_queued_date_time date : " + str( self.sde_queued_date_time))
-        self.edit_task.txt = self.sde_queued_date_time
+        logging.debug(" self.sde_queued_date_time date : " + str(self.sde_queued_date_time))
+        self.edit_task.queue_datetime = self.sde_queued_date_time
+        self.sd_queued_date_data.configure(text=new_ts)
+        self.sd_queued_date_data.pack(side=tk.LEFT)
         self.t_d_p_window.withdraw()
 
     def time_date_new_widgets(self):
@@ -366,14 +366,14 @@ class BlueSkyReader():
             self.n_t_d_p_window.deiconify()
 
     def new_return_time_date(self):
-        logging.debug("new_return_time_date : " + str(self.sd_new_time_picker.get_time()))
         logging.debug("edit_return_time_date date : " + str(self.sd_new_cal.get_date()))
-        # date_obj = self.sd_new_cal.get_date()
-        # formatted_date = date_obj.strftime("%y %m %d")
+        logging.debug("new_return_time_date : " + str(self.sd_new_time_picker.get_time()))
         new_ts = str(self.sd_new_cal.get_date()) + " " + str(self.sd_new_time_picker.get_time())
         self.sdn_queued_date_time = datetime.datetime.strptime(new_ts, self.format_string)
         logging.debug(" self.sdn_queued_date_time date : " + str(self.sdn_queued_date_time))
-        self.new_task.txt = self.sdn_queued_date_time
+        self.new_task.queue_datetime = self.sdn_queued_date_time
+        self.sd_n_queued_date_data.configure(text=new_ts)
+        self.sd_n_queued_date_data.pack(side=tk.LEFT)
         self.n_t_d_p_window.withdraw()
 
     def save_scheduled_task(self):
