@@ -1,3 +1,5 @@
+import logging
+
 import sqlalchemy as sa
 from sqlalchemy import MetaData, Table, select, insert, update, delete, func
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -113,6 +115,7 @@ def update_scheduled_post(edit: PostData):
     format_string = "%Y-%m-%d %H:%M:%S"
     # Convert string to datetime object
     datetime_object = datetime.datetime.strptime(date_string, format_string)
+    print("exit.id : " + str(edit.id))
 
     posts = session.query(Post).filter_by(id=edit.id).first()
     if posts:
@@ -122,6 +125,8 @@ def update_scheduled_post(edit: PostData):
         posts.queued=bool(edit.queued)
         posts.queue_datetime=datetime_object
         session.commit()
+    else:
+        return False
     return True
 
 def delete_scheduled_post(delete_index: int):

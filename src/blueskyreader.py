@@ -211,6 +211,10 @@ class BlueSkyReader():
         # toolbar
         sched_toolbar = ctk.CTkFrame(sched_window)
         sched_toolbar.pack(side=tk.TOP, fill=tk.X)
+        sched_newButton = ctk.CTkButton(sched_toolbar, text="Delete", command=self.new_schedule_post)
+        sched_newButton.pack(side=ctk.LEFT)
+        sched_editButton = ctk.CTkButton(sched_toolbar, text="Delete", command=self.edit_schedule_post)
+        sched_editButton.pack(side=ctk.LEFT)
         sched_deleteButton = ctk.CTkButton(sched_toolbar, text="Delete", command=self.delete_schedule_post)
         sched_deleteButton.pack(side=ctk.LEFT)
         sched_deleteButton = ctk.CTkButton(sched_toolbar, text="Refresh", command=self.refresh_schedule_table)
@@ -296,17 +300,19 @@ class BlueSkyReader():
         detail_frame = ctk.CTkFrame(sd_window)
         detail_frame.pack(fill="both", expand=True)
         row = self.current_schedule_row
-        id = self.sched_dataframe.iloc[row, 0]
-        author = self.sched_dataframe.iloc[row, 1]
-        uri = self.sched_dataframe.iloc[row, 2]
-        txt = self.sched_dataframe.iloc[row, 3]
-        queued = self.sched_dataframe.iloc[row, 4]
+        self.id = self.sched_dataframe.iloc[row, 0]
+        #TODO fix this MESS. it is using the right row and no matter what I get id = 10 back
+        print(" editing with ID : " + str(self.sched_dataframe.iloc[3, 0]))
+        self.author = self.sched_dataframe.iloc[row, 1]
+        self.uri = self.sched_dataframe.iloc[row, 2]
+        self.txt = self.sched_dataframe.iloc[row, 3]
+        self.sde_queued = self.sched_dataframe.iloc[row, 4]
         self.sde_queued_date_time = self.sched_dataframe.iloc[row, 5]
         self.sde_queued_date_time = self.sde_queued_date_time[: 19]
         sd_input_frame = ctk.CTkFrame(detail_frame)
         sd_id_label = CTkLabel(sd_input_frame, text="ID:")
         sd_id_label.grid(row=0, column=0, padx=1, pady=1)
-        sd_id__data = CTkLabel(sd_input_frame, text=id)
+        sd_id__data = CTkLabel(sd_input_frame, text=self.id)
         sd_id__data.grid(row=0, column=1, padx=1, pady=1)
         sd_author_label = CTkLabel(sd_input_frame, text="Author")
         sd_author_label.grid(row=1, column=0, padx=1, pady=1)
@@ -314,21 +320,22 @@ class BlueSkyReader():
         sd_author_data.grid(row=1, column=1, padx=1, pady=1)
         sd_uri_label = CTkLabel(sd_input_frame, text="uri:")
         sd_uri_label.grid(row=2, column=0, padx=1, pady=1)
-        sd_uri_data = CTkLabel(sd_input_frame, text=uri)
+        sd_uri_data = CTkLabel(sd_input_frame, text=self.uri)
         sd_uri_data.grid(row=2, column=1, padx=1, pady=1)
         sd_body_label = CTkLabel(sd_input_frame, text="Body:")
         sd_body_label.grid(row=3, column=0, padx=1, pady=1)
         self.sd_body_data = Text(sd_input_frame, font="Calibri,10,bold", width=40, height=8)
-        self.sd_body_data.insert("1.0",txt)
+        self.sd_body_data.insert("1.0",self.txt)
         self.sd_body_data.grid(row=3, column=1, padx=1, pady=1)
         sd_input_frame.grid(row=0, column=0)
         #
         sd_queued_panel = ctk.CTkFrame(detail_frame)
         sd_queued_label = CTkLabel(sd_queued_panel, text="Queued:")
         sd_queued_label.pack(side=tk.LEFT)
-        queued_var = tk.StringVar(value="True")
-        queued_combo = ttk.Combobox(sd_queued_panel, width=27, values=('True', 'False'), textvariable=queued_var)
-        queued_combo.pack(side=tk.LEFT)
+        self.queued_combo = ttk.Combobox(sd_queued_panel, width=27, values=('True', 'False'), textvariable=self.sde_queued)
+        self.queued_combo.set(self.sde_queued)
+        self.queued_combo.bind('<<ComboboxSelected>>', self.sel_queued)
+        self.queued_combo.pack(side=tk.LEFT)
         sd_queued_panel.grid(row=1, column=0, padx=1, pady=1)
         #
         sd_queued_display_panel = ctk.CTkFrame(detail_frame)
@@ -339,7 +346,6 @@ class BlueSkyReader():
         sd_queued_date_show = ctk.CTkButton(sd_queued_display_panel, text='Date/Time Widgets', command=self.time_date_edit_widgets)
         sd_queued_date_show.pack(side=tk.LEFT)
         sd_queued_display_panel.grid(row=2, column=0, padx=1, pady=1)
-        self.edit_task = PostData(int(id), author, uri, txt, queued, self.sde_queued_date_time)
         sd_n_submit_button = ctk.CTkButton(detail_frame, text='Save Sceduled Task', command=self.save_edited_scheduled_task)
         sd_n_submit_button.grid(row=3, column=0)
         global t_d_p_window # To access the Time/Date widget window outside the function
@@ -421,7 +427,11 @@ class BlueSkyReader():
             messagebox.showinfo("Information", "Error while saving task")
 
     def save_edited_scheduled_task(self):
-        self.edit_task.txt = self.sd_body_data.get("1.0", tk.END)
+        self.edit_task = PostData(int(self.id), self.author, self.uri, self.sd_body_data.get("1.0", tk.END),
+                                  self.sde_queued, self.sde_queued_date_time)
+        #self.edit_task.txt = self.sd_body_data.get("1.0", tk.END)
+        print("task : " + str(self.edit_task))
+        print("que : " + str(self.sde_queued))
         logging.debug(" update_scheduled_post : " + str(self.edit_task))
         commit = update_scheduled_post(self.edit_task)
         if commit:
@@ -429,8 +439,9 @@ class BlueSkyReader():
         else:
             messagebox.showinfo("Information", "Error while updating task")
 
-    def sel_queued(self):
-        pass
+    def sel_queued(self, event):
+        self.sde_queued = self.queued_combo.get()
+        print("queued updated")
 
     def follower_refresh(self):
         #TODO Refresh is not refreshing the table yet.
@@ -479,7 +490,8 @@ class BlueSkyReader():
         logging.debug('Scheduler Window click event')
         try:
             sclicked = self.schedule_table.get_row_clicked(event)
-            self.current_schedule_row = sclicked
+            print("row : ")
+            print(str(sclicked))
         except:
             logging.debug('Error on click event')
 
