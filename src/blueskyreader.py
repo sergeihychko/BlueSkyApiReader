@@ -8,6 +8,7 @@ import os
 import asyncio
 import threading
 import logging
+from utilities import WebImage
 
 from customtkinter import CTkLabel
 from pandas.core.interchange.dataframe_protocol import DataFrame
@@ -16,6 +17,7 @@ from api_driver import *
 from scheduler import Scheduler
 from database_driver import *
 from post_data import PostData
+from profile import ProfileData
 from client_wrapper import ClientWrapper
 from tkinter import *
 from tkinter import ttk, messagebox
@@ -25,7 +27,6 @@ from pandastable import Table
 import pandas as pd
 from tkcalendar import Calendar, DateEntry
 from spin_time_picker import SpinTimePicker
-#from tktimepicker import constants, SpinTimePickerModern
 
 class BlueSkyReader():
     account : str
@@ -35,11 +36,12 @@ class BlueSkyReader():
     database_name: str
     df: DataFrame
     client: Client
+    profile : ProfileData
     format_string = "%Y-%m-%d %H:%M:%S"
 
     def __init__(self, master=None):
         self.load_config()
-        self.df = self.init_data(1)
+        self.df = self.init_data(0)
         self.master = master
         self.current_table_row = -1
         self.current_schedule_row = -1
@@ -63,6 +65,9 @@ class BlueSkyReader():
         schedMenu = Menu(menu)
         menu.add_cascade(label="Scheduler", menu=schedMenu)
         schedMenu.add_command(label="Detail", command=self.create_schedule_detail)
+        profileMenu = Menu(menu)
+        menu.add_cascade(label="Profile", menu=profileMenu)
+        profileMenu.add_command(label="Detail", command=self.create_profile_detail)
         # toolbar
         toolbar = ctk.CTkFrame(root)
         detailButton = ctk.CTkButton(toolbar, text="Detail", command=self.create_detail)
@@ -186,6 +191,22 @@ class BlueSkyReader():
         f_table = Table(detail_fing_frame, dataframe=following_dataframe, showtoolbar=True, showstatusbar=True)
         f_table.show()
         detail_fing_frame.mainloop()
+
+    def create_profile_detail(self):
+        # create profile detail window
+        detail_profile_window = tkinter.Toplevel()
+        detail_profile_window.title("Following List : " + str(self.profile.displayName))
+        detail_profile_window.geometry("300x600")
+        detail_profile_frame = ctk.CTkFrame(detail_profile_window)
+        detail_profile_frame.pack(fill="both", expand=True)
+        profile_image = WebImage(self.profile.avatar_uri).get()
+        profile_image_button = Button(detail_profile_frame, image=profile_image)
+        profile_image_button.pack(side=tk.LEFT)
+        profile_dn_labbel = CTkLabel(detail_profile_frame, text=self.profile.displayName)
+        profile_dn_labbel.pack(side=tk.LEFT)
+        profile_des_label = CTkLabel(detail_profile_frame, text=self.profile.description)
+        profile_des_label.pack(side=tk.LEFT)
+        detail_profile_window.mainloop()
 
     def create_schedule_detail(self):
         # create schedule detail window
@@ -524,10 +545,12 @@ class BlueSkyReader():
             filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
             filler.append({'txt': filler_text, 'time': filler_date, 'uri': filler_uri})
             df = pd.DataFrame(filler, columns=['txt', 'time', 'uri'])
+            self.profile = None
         else:
             client_wrapper = ClientWrapper(self.account, self.token)
             self.client = client_wrapper.init_client()
             latest = Driver().perform_get_skeets(self.client)
+            self.profile = Driver().get_profile_data(self.client, self.account)
             df = pd.DataFrame(latest, columns=['txt', 'time', 'uri'])
         return df
 

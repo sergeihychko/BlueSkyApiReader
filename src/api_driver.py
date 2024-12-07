@@ -2,6 +2,7 @@
 from atproto import AtUri, models
 from atproto_client import Client
 import asyncio
+from profile import ProfileData
 import json
 import os
 
@@ -126,10 +127,10 @@ class Driver:
     @staticmethod
     def get_profile_data(client: Client, profile_uri: str):
         print("retrieving date for profile :" + profile_uri)
-        profile = client.get_profile(actor=profile_uri)
-
-        print("profile dump :" + profile.display_name + " : " + str(profile))
-        return profile
+        p = client.get_profile(actor=profile_uri)
+        profile_obj = ProfileData(p.display_name, p.description, p.avatar, p.banner, int(p.followers_count),
+                                  int(p.follows_count), p.posts_count, p.created_at)
+        return profile_obj
 
     def get_deleted(self, client: Client):
         pass
