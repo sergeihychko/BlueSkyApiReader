@@ -9,6 +9,7 @@ import asyncio
 import threading
 import logging
 from utilities import WebImage
+from PIL import ImageTk
 
 from customtkinter import CTkLabel
 from pandas.core.interchange.dataframe_protocol import DataFrame
@@ -200,10 +201,11 @@ class BlueSkyReader():
         detail_profile_frame = ctk.CTkFrame(detail_profile_window)
         detail_profile_frame.pack(fill="both", expand=True)
         profile_image = WebImage(self.profile.avatar_uri).get()
-        profile_image_button = Button(detail_profile_frame, image=profile_image)
+        #TODO obviously reserach resizing this photo
+        profile_image_button = Button(detail_profile_frame, image=profile_image, width=50, height=50)
         profile_image_button.pack(side=tk.LEFT)
-        profile_dn_labbel = CTkLabel(detail_profile_frame, text=self.profile.displayName)
-        profile_dn_labbel.pack(side=tk.LEFT)
+        profile_dn_label = CTkLabel(detail_profile_frame, text=self.profile.displayName)
+        profile_dn_label.pack(side=tk.LEFT)
         profile_des_label = CTkLabel(detail_profile_frame, text=self.profile.description)
         profile_des_label.pack(side=tk.LEFT)
         detail_profile_window.mainloop()
