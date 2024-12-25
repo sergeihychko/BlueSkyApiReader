@@ -202,8 +202,8 @@ class BlueSkyReader():
         detail_profile_frame.pack(fill="both", expand=True)
         profile_image = WebImage(self.profile.avatar_uri).get()
         #TODO obviously reserach resizing this photo
-        profile_image_button = Button(detail_profile_frame, image=profile_image, width=50, height=50)
-        profile_image_button.pack(side=tk.LEFT)
+        #profile_image_button = Button(detail_profile_frame, image=profile_image, width=50, height=50)
+        #profile_image_button.pack(side=tk.LEFT)
         profile_dn_label = CTkLabel(detail_profile_frame, text=self.profile.displayName)
         profile_dn_label.pack(side=tk.LEFT)
         profile_des_label = CTkLabel(detail_profile_frame, text=self.profile.description)
